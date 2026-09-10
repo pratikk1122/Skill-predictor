@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Poppins:wght@500;600;700&display=swap");
+
+/* ================= THEME VARIABLES ================= */
+@theme {
+  --font-sans: "Inter", sans-serif;
+  --font-heading: "Poppins", sans-serif;
+
+  --color-blue-greeny: #5cbdb9;
+  --color-blue-greeny-dark: #4aa8a4;
+  --color-pinky: #fbe3e8;
+  --color-teeny-greeny: #ebf6f5;
+
+  --color-text-dark: #2d3748;
+  --color-text-light: #718096;
+}
+
+/* ================= TEXT GRADIENT ================= */
+.text-gradient {
+  background: linear-gradient(135deg, #5cbdb9 0%, #319795 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ================= LOGO SLIDER FIX ================= */
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll {
+  animation: scroll 30s linear infinite;
+  display: flex;
+  width: max-content;
+}
+
+.group:hover .animate-scroll {
+  animation-play-state: paused;
+}
+
+/* ================= COMMON INPUT STYLES ================= */
+.input {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+
+  font-family: var(--font-sans);
+  color: var(--color-text-dark);
+
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.input::placeholder {
+  color: var(--color-text-light);
+}
+
+.input:focus {
+  border-color: var(--color-blue-greeny);
+  box-shadow: 0 0 0 2px rgba(92, 189, 185, 0.2);
+}
+
+/* GLOBAL CLICK FIX */
+html,
+body,
+#root {
+  pointer-events: auto !important;
+}
