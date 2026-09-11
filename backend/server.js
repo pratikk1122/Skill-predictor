@@ -34,6 +34,62 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+// 🔍 SMTP DIAGNOSTIC ENDPOINT
+app.get("/api/debug-smtp", async (req, res) => {
+  const user = process.env.EMAIL_USER;
+  const rawPass = process.env.EMAIL_PASS;
+  const pass = rawPass ? rawPass.replace(/\s+/g, "") : "";
+
+  const info = {
+    hasUser: !!user,
+    userValue: user ? user.trim() : null,
+    hasPass: !!rawPass,
+    passLength: pass ? pass.length : 0
+  };
+
+  if (!user || !pass) {
+    return res.json({ success: false, reason: "ENV_VARS_MISSING", ...info });
+  }
+
+  const nodemailer = require("nodemailer");
+  const t465 = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: { user: user.trim(), pass },
+    tls: { rejectUnauthorized: false },
+    connectionTimeout: 10000
+  });
+
+  const t587 = nodemailer.createTransport({
+    service: "gmail",
+    auth: { user: user.trim(), pass },
+    connectionTimeout: 10000
+  });
+
+  let r465 = null, r587 = null;
+  try {
+    await t465.verify();
+    r465 = "VERIFIED_OK";
+  } catch (e) {
+    r465 = { error: e.message, code: e.code };
+  }
+
+  try {
+    await t587.verify();
+    r587 = "VERIFIED_OK";
+  } catch (e) {
+    r587 = { error: e.message, code: e.code };
+  }
+
+  return res.json({
+    success: r465 === "VERIFIED_OK" || r587 === "VERIFIED_OK",
+    port465_SSL: r465,
+    port587_GmailService: r587,
+    info
+  });
+});
+
 const server = http.createServer(app);
 
 const io = new Server(server, {

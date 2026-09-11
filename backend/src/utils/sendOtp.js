@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
 
-/* ================= 🚀 OPTIMIZED EMAIL TRANSPORTER ================= */
+/* ================= 🚀 OPTIMIZED EMAIL TRANSPORTERS ================= */
 if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
   console.error("❌ EMAIL ENV VARIABLES MISSING");
 }
@@ -10,16 +10,38 @@ const getCleanEmailPass = () => {
   return pass.replace(/\s+/g, "");
 };
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER?.trim(),
-    pass: getCleanEmailPass()
-  },
-  connectionTimeout: 15000, 
-  greetingTimeout: 10000,
-  socketTimeout: 15000
-});
+// Primary: Direct SSL on port 465 (Cloud-friendly, universally permitted on Render)
+const createSSLTransporter = () => {
+  return nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.EMAIL_USER?.trim(),
+      pass: getCleanEmailPass()
+    },
+    tls: {
+      rejectUnauthorized: false
+    },
+    connectionTimeout: 12000,
+    greetingTimeout: 8000,
+    socketTimeout: 12000
+  });
+};
+
+// Fallback: Gmail Service (Port 587 STARTTLS)
+const createServiceTransporter = () => {
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER?.trim(),
+      pass: getCleanEmailPass()
+    },
+    connectionTimeout: 12000,
+    greetingTimeout: 8000,
+    socketTimeout: 12000
+  });
+};
 
 /* ================= PROFESSIONAL EMAIL OTP ================= */
 const sendOtp = async (email, otp) => {
@@ -29,61 +51,75 @@ const sendOtp = async (email, otp) => {
   console.log(`🔑 [OTP CODE]     👉  ${otp}  👈 (Valid for 5 mins)`);
   console.log(`======================================================\n`);
 
-  try {
-    const mailOptions = {
-      from: `"Skill Predictor Security" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "Verification Code - Skill Predictor Security",
-      html: `
-        <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 500px; margin: 40px auto; padding: 0; border: 1px solid #e5e7eb; border-radius: 20px; overflow: hidden; background-color: #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
-          <div style="background-color: #0D9488; padding: 40px 20px; text-align: center;">
-            <h2 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -1px;">Skill Predictor</h2>
-            <p style="color: rgba(255,255,255,0.9); font-size: 11px; margin: 8px 0 0 0; text-transform: uppercase; letter-spacing: 2px; font-weight: 700;">Secure Authentication Engine</p>
+  const user = process.env.EMAIL_USER?.trim();
+  const pass = getCleanEmailPass();
+
+  if (!user || !pass) {
+    console.warn("⚠️ SMTP credentials not configured (EMAIL_USER or EMAIL_PASS missing).");
+    return { success: true, delivered: false, isDev: true, error: "SMTP credentials not configured on server" };
+  }
+
+  const mailOptions = {
+    from: `"Skill Predictor Security" <${user}>`,
+    to: email,
+    subject: "Verification Code - Skill Predictor Security",
+    html: `
+      <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 500px; margin: 40px auto; padding: 0; border: 1px solid #e5e7eb; border-radius: 20px; overflow: hidden; background-color: #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
+        <div style="background-color: #0D9488; padding: 40px 20px; text-align: center;">
+          <h2 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -1px;">Skill Predictor</h2>
+          <p style="color: rgba(255,255,255,0.9); font-size: 11px; margin: 8px 0 0 0; text-transform: uppercase; letter-spacing: 2px; font-weight: 700;">Secure Authentication Engine</p>
+        </div>
+        
+        <div style="padding: 40px 35px; text-align: left;">
+          <h3 style="color: #111827; font-size: 18px; font-weight: 800; margin: 0 0 15px 0; text-align: center;">Verification Required</h3>
+          <p style="color: #4b5563; font-size: 14px; line-height: 1.8; margin: 0; text-align: center;">
+            Please use the authorization code below to complete your identity verification process. This code is unique to your session.
+          </p>
+          
+          <div style="background: #f8fafc; padding: 30px; text-align: center; border-radius: 16px; margin: 30px 0; border: 1px solid #f1f5f9;">
+            <h1 style="letter-spacing: 12px; color: #0D9488; margin: 0; font-size: 42px; font-weight: 900; font-family: 'Courier New', Courier, monospace; display: inline-block;">${otp}</h1>
           </div>
           
-          <div style="padding: 40px 35px; text-align: left;">
-            <h3 style="color: #111827; font-size: 18px; font-weight: 800; margin: 0 0 15px 0; text-align: center;">Verification Required</h3>
-            <p style="color: #4b5563; font-size: 14px; line-height: 1.8; margin: 0; text-align: center;">
-              Please use the authorization code below to complete your identity verification process. This code is unique to your session.
-            </p>
-            
-            <div style="background: #f8fafc; padding: 30px; text-align: center; border-radius: 16px; margin: 30px 0; border: 1px solid #f1f5f9;">
-              <h1 style="letter-spacing: 12px; color: #0D9488; margin: 0; font-size: 42px; font-weight: 900; font-family: 'Courier New', Courier, monospace; display: inline-block;">${otp}</h1>
-            </div>
-            
-            <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9;">
-              This code will automatically expire in <span style="color: #ef4444; font-weight: 800;">5 minutes</span>.
-            </p>
-            
-            <div style="margin-top: 30px; text-align: center;">
-              <p style="color: #9ca3af; font-size: 11px; line-height: 1.6; margin: 0;">
-                If you did not initiate this request, please contact our security team immediately. Do not share this code with anyone.
-              </p>
-            </div>
-          </div>
+          <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0; padding-bottom: 10px; border-bottom: 1px solid #f1f5f9;">
+            This code will automatically expire in <span style="color: #ef4444; font-weight: 800;">5 minutes</span>.
+          </p>
           
-          <div style="background: #fcfcfc; padding: 25px; text-align: center; border-top: 1px solid #f1f5f9;">
-            <p style="color: #94a3b8; font-size: 10px; margin: 0; line-height: 1.8; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">
-              © 2026 Skill Predictor AI • Pune, Maharashtra, India.
+          <div style="margin-top: 30px; text-align: center;">
+            <p style="color: #9ca3af; font-size: 11px; line-height: 1.6; margin: 0;">
+              If you did not initiate this request, please contact our security team immediately. Do not share this code with anyone.
             </p>
           </div>
         </div>
-      `
-    };
+        
+        <div style="background: #fcfcfc; padding: 25px; text-align: center; border-top: 1px solid #f1f5f9;">
+          <p style="color: #94a3b8; font-size: 10px; margin: 0; line-height: 1.8; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">
+            © 2026 Skill Predictor AI • Pune, Maharashtra, India.
+          </p>
+        </div>
+      </div>
+    `
+  };
 
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-      await transporter.sendMail(mailOptions);
-      console.log(`✅ OTP email successfully sent via SMTP to: ${email}`);
+  try {
+    const tSSL = createSSLTransporter();
+    await tSSL.sendMail(mailOptions);
+    console.log(`✅ OTP email successfully sent via SMTP 465 (SSL) to: ${email}`);
+    return { success: true, delivered: true };
+  } catch (sslError) {
+    console.warn("⚠️ SSL Port 465 delivery failed, attempting Service Gmail fallback:", sslError.message);
+    try {
+      const tService = createServiceTransporter();
+      await tService.sendMail(mailOptions);
+      console.log(`✅ OTP email successfully sent via Service Gmail fallback to: ${email}`);
       return { success: true, delivered: true };
-    } else {
-      console.warn("⚠️ SMTP credentials not configured. OTP printed to console above.");
-      return { success: true, delivered: false, isDev: true };
+    } catch (fallbackError) {
+      console.error("❌ ALL SMTP DISPATCH METHODS FAILED:", fallbackError.message);
+      return { 
+        success: true, 
+        delivered: false, 
+        error: `SSL 465: ${sslError.message} | Service: ${fallbackError.message}` 
+      };
     }
-  } catch (error) {
-    console.error("❌ OTP EMAIL DISPATCH ERROR (SMTP):", error.message);
-    console.warn("👉 TIP: Use the console OTP above or update EMAIL_PASS with a fresh Google App Password.");
-    // Return gracefully in dev so registration/login flow continues
-    return { success: true, delivered: false, error: error.message };
   }
 };
 

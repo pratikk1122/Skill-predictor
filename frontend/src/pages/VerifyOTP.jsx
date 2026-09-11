@@ -39,7 +39,13 @@ const VerifyOTP = () => {
       clearTimeout(wakeTimer);
       setTimer(30);
       if (res.data?.delivered === false) {
-        setMessage("⚠️ OTP generated. If email delay occurs, check Spam/Promotions or retry shortly.");
+        if (res.data?.fallbackOtp) {
+          const digits = res.data.fallbackOtp.toString().split("");
+          setOtp(digits);
+          setMessage(`Notice: Email server delivery delayed. Auto-filled code: ${res.data.fallbackOtp}`);
+        } else {
+          setMessage("⚠️ OTP generated. If email delay occurs, check Spam/Promotions or retry shortly.");
+        }
       } else {
         setMessage("Success: OTP sent to your email inbox.");
       }

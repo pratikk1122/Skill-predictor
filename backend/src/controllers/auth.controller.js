@@ -64,7 +64,9 @@ exports.sendOtp = async (req, res) => {
     res.json({
       message: "OTP sent successfully",
       delivered: sendResult?.delivered || false,
-      devNote: sendResult?.delivered ? undefined : "If SMTP is not configured, check your server terminal for the OTP code."
+      smtpError: sendResult?.error || undefined,
+      fallbackOtp: sendResult?.delivered ? undefined : otp,
+      devNote: sendResult?.delivered ? undefined : "If email delivery is delayed, use the fallback code provided."
     });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -258,7 +260,9 @@ exports.forgotPassword = async (req, res) => {
     res.json({
       message: "OTP sent successfully",
       delivered: sendResult?.delivered || false,
-      devNote: sendResult?.delivered ? undefined : "If SMTP is not configured, check your server terminal for the OTP code."
+      smtpError: sendResult?.error || undefined,
+      fallbackOtp: sendResult?.delivered ? undefined : otp,
+      devNote: sendResult?.delivered ? undefined : "If email delivery is delayed, use the fallback code provided."
     });
   } catch (err) {
     console.error("FORGOT PASSWORD ERROR 👉", err);

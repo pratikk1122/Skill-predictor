@@ -38,13 +38,18 @@ const ForgotPassword = () => {
   try {
     setLoading(true);
 
-    await api.post("/auth/forgot-password", {
+    const res = await api.post("/auth/forgot-password", {
       email: email.trim().toLowerCase()
     });
 
     setStep(2);
     setTimer(30); // ⏳ 30s cooldown
-    setMessage("Success: OTP sent to your email.");
+    if (res.data?.fallbackOtp) {
+      setOtp(res.data.fallbackOtp.toString().split(""));
+      setMessage(`Notice: Email delivery delayed. Auto-filled code: ${res.data.fallbackOtp}`);
+    } else {
+      setMessage("Success: OTP sent to your email.");
+    }
   } catch (err) {
     const backendMsg = err.response?.data?.message;
 
