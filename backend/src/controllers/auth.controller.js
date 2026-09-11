@@ -91,13 +91,13 @@ exports.verifyOtp = async (req, res) => {
 
     user.role = ADMIN_EMAILS.includes(email) ? "admin" : "student";
 
-    if (!user.password && password) {
+    if (password) {
       user.password = await bcrypt.hash(password, 10);
-      user.firstName = firstName || user.firstName;
-      user.surName = surName || user.surName;
-      user.mobile = mobile || user.mobile;
-      user.education = education || user.education;
     }
+    if (firstName) user.firstName = firstName;
+    if (surName) user.surName = surName;
+    if (mobile) user.mobile = mobile;
+    if (education) user.education = education;
 
     user.lastOtpVerifiedAt = new Date();
     user.forceOtpOnNextLogin = false; 

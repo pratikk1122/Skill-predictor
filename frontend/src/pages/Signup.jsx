@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ROUTES } from "../routes/routes";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -41,10 +42,15 @@ const Signup = () => {
 
     setLoading(true);
 
-    navigate("/verify-otp", {
+    navigate(ROUTES.VERIFY_OTP, {
       state: {
+        firstName: firstName.trim(),
+        surName: surName.trim(),
+        mobile: mobile.trim(),
+        education,
         email: email.trim().toLowerCase(),
-        mobile: mobile.trim()
+        password,
+        mode: "signup"
       }
     });
 

@@ -27,16 +27,29 @@ const VerifyOTP = () => {
     const toEmail = targetEmail || emailValue || email;
     if (!toEmail) return;
     setMessage("");
+
+    // If request takes >3s on Render free tier, notify the user so they know it's not frozen
+    const wakeTimer = setTimeout(() => {
+      setMessage("⏳ Waking up secure cloud server, please hold on...");
+    }, 3000);
+
     try {
       setOtpLoading(true);
-      await api.post("/auth/send-otp", { email: toEmail.toLowerCase() });
+      const res = await api.post("/auth/send-otp", { email: toEmail.toLowerCase() });
+      clearTimeout(wakeTimer);
       setTimer(30);
-      setMessage("Success: OTP sent to your email inbox.");
+      if (res.data?.delivered === false) {
+        setMessage("⚠️ OTP generated. If email delay occurs, check Spam/Promotions or retry shortly.");
+      } else {
+        setMessage("Success: OTP sent to your email inbox.");
+      }
     } catch (err) {
+      clearTimeout(wakeTimer);
       const msg = err.response?.data?.message;
       if (msg?.includes("wait")) setTimer(30);
       setMessage(msg || "Error: Failed to send OTP.");
     } finally {
+      clearTimeout(wakeTimer);
       setOtpLoading(false);
     }
   };
@@ -75,6 +88,21 @@ const VerifyOTP = () => {
   const handleKeyDown = (e, index) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs.current[index - 1].focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, 6);
+    if (!pastedData) return;
+    const newOtp = [...otp];
+    for (let i = 0; i < pastedData.length; i++) {
+      newOtp[i] = pastedData[i];
+    }
+    setOtp(newOtp);
+    const focusIndex = Math.min(pastedData.length, 5);
+    if (inputRefs.current[focusIndex]) {
+      inputRefs.current[focusIndex].focus();
     }
   };
 
@@ -192,12 +220,18 @@ const VerifyOTP = () => {
         <div className="flex justify-between gap-2 mb-8">
           {otp.map((data, index) => (
             <input
-              key={index} type="text" maxLength="1"
+              key={index}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete={index === 0 ? "one-time-code" : "off"}
+              maxLength="1"
               ref={(el) => (inputRefs.current[index] = el)}
               value={data}
               onChange={(e) => handleOtpChange(e.target, index)}
               onKeyDown={(e) => handleKeyDown(e, index)}
-              className="w-full h-14 bg-[#F9FBFC] border-none rounded-2xl text-center text-xl font-black text-[#1e293b] focus:ring-2 focus:ring-[#5cbdb9]/20 transition-all outline-none"
+              onPaste={handlePaste}
+              className="w-full h-14 bg-[#F9FBFC] border border-slate-100 rounded-2xl text-center text-xl font-black text-[#1e293b] focus:border-[#5cbdb9] focus:ring-2 focus:ring-[#5cbdb9]/20 transition-all outline-none"
             />
           ))}
         </div>
@@ -212,13 +246,17 @@ const VerifyOTP = () => {
           </button>
 
           <button
-            onClick={handleSendOtp}
+            onClick={() => handleSendOtp()}
             disabled={timer > 0 || otpLoading}
             className="w-full py-4 rounded-[1.5rem] text-[10px] font-black text-[#5cbdb9] uppercase tracking-[0.2em] hover:bg-[#5cbdb9]/5 transition-all disabled:text-slate-300"
           >
-            {timer > 0 ? `RESEND CODE IN ${timer}S` : "SEND OTP"}
+            {timer > 0 ? `RESEND CODE IN ${timer}S` : (otpLoading ? "SENDING..." : "SEND OTP")}
           </button>
         </div>
+
+        <p className="text-[11px] text-slate-400 text-center mt-4">
+          💡 Didn't find it in Inbox? Check your <strong>Spam</strong> or <strong>Promotions</strong> folder.
+        </p>
 
         {message && (
           <div className={`mt-8 p-4 rounded-2xl text-center text-[10px] font-black uppercase tracking-widest ${
