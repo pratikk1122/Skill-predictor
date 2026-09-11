@@ -1,3 +1,5 @@
+const dns = require("dns");
+dns.setDefaultResultOrder("ipv4first");
 require("dotenv").config();
 const http = require("http");
 const { Server } = require("socket.io");
@@ -56,6 +58,7 @@ app.get("/api/debug-smtp", async (req, res) => {
     host: "smtp.gmail.com",
     port: 465,
     secure: true,
+    family: 4, // 🔥 Force IPv4
     auth: { user: user.trim(), pass },
     tls: { rejectUnauthorized: false },
     connectionTimeout: 10000
@@ -63,6 +66,7 @@ app.get("/api/debug-smtp", async (req, res) => {
 
   const t587 = nodemailer.createTransport({
     service: "gmail",
+    family: 4, // 🔥 Force IPv4
     auth: { user: user.trim(), pass },
     connectionTimeout: 10000
   });

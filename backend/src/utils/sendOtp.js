@@ -1,3 +1,5 @@
+const dns = require("dns");
+dns.setDefaultResultOrder("ipv4first");
 const nodemailer = require("nodemailer");
 
 /* ================= 🚀 OPTIMIZED EMAIL TRANSPORTERS ================= */
@@ -16,6 +18,7 @@ const createSSLTransporter = () => {
     host: "smtp.gmail.com",
     port: 465,
     secure: true,
+    family: 4, // 🔥 Force IPv4 (fixes Render ENETUNREACH IPv6 bug)
     auth: {
       user: process.env.EMAIL_USER?.trim(),
       pass: getCleanEmailPass()
@@ -33,6 +36,7 @@ const createSSLTransporter = () => {
 const createServiceTransporter = () => {
   return nodemailer.createTransport({
     service: "gmail",
+    family: 4, // 🔥 Force IPv4
     auth: {
       user: process.env.EMAIL_USER?.trim(),
       pass: getCleanEmailPass()
