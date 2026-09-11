@@ -10,6 +10,7 @@ const StudentDashboard = () => {
   const navigate = useNavigate();
   const [profileImage, setProfileImage] = useState(null);
   const [studentInfo, setStudentInfo] = useState({ name: "", email: "" });
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -81,15 +82,20 @@ const StudentDashboard = () => {
 
       <input type="file" ref={fileInputRef} onChange={handleImageChange} className="hidden" accept="image/*" />
       
-      <Sidebar handleLogout={handleLogout} />
+      <Sidebar 
+        handleLogout={handleLogout} 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+      />
 
-      <main className="flex-1 overflow-y-auto p-8 lg:p-12 relative z-10 scroll-smooth">
+      <main className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12 relative z-10 scroll-smooth">
         <Navbar 
           profileImage={profileImage} 
           setProfileImage={setProfileImage}
           fileInputRef={fileInputRef}
           studentName={studentInfo.name}
           studentEmail={studentInfo.email}
+          onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
         />
 
         {/* Welcome Section with Reveal Animation */}
@@ -97,16 +103,16 @@ const StudentDashboard = () => {
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="mb-12 mt-6"
+          className="mb-8 sm:mb-12 mt-3 sm:mt-6"
         >
-          <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-tight">
+          <h1 className="text-2xl sm:text-4xl font-black text-slate-800 tracking-tight leading-tight">
             Welcome back, <span className="text-teal-600 capitalize">{studentInfo.name}</span>! 👋
           </h1>
           <motion.p 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-slate-500 mt-2 text-lg font-medium"
+            className="text-slate-500 mt-1 sm:mt-2 text-sm sm:text-lg font-medium"
           >
             Your path to professional excellence starts here.
           </motion.p>
@@ -117,7 +123,7 @@ const StudentDashboard = () => {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-10"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 pb-10"
         >
           <FeatureCard 
             variants={itemVariants}

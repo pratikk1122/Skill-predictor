@@ -5,22 +5,20 @@ if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
   console.error("❌ EMAIL ENV VARIABLES MISSING");
 }
 
+const getCleanEmailPass = () => {
+  const pass = process.env.EMAIL_PASS || "";
+  return pass.replace(/\s+/g, "");
+};
+
 const transporter = nodemailer.createTransport({
   service: "gmail",
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true, 
-  pool: true,   
-  maxConnections: 5,
-  maxMessages: 100,
-  rateLimit: 10, 
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    user: process.env.EMAIL_USER?.trim(),
+    pass: getCleanEmailPass()
   },
-  connectionTimeout: 5000, 
-  greetingTimeout: 5000,
-  socketTimeout: 5000
+  connectionTimeout: 15000, 
+  greetingTimeout: 10000,
+  socketTimeout: 15000
 });
 
 /* ================= PROFESSIONAL EMAIL OTP ================= */

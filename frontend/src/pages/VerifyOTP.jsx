@@ -21,9 +21,37 @@ const VerifyOTP = () => {
 
   const inputRefs = useRef([]);
 
+  const autoSentRef = useRef(false);
+
+  const handleSendOtp = async (targetEmail) => {
+    const toEmail = targetEmail || emailValue || email;
+    if (!toEmail) return;
+    setMessage("");
+    try {
+      setOtpLoading(true);
+      await api.post("/auth/send-otp", { email: toEmail.toLowerCase() });
+      setTimer(30);
+      setMessage("Success: OTP sent to your email inbox.");
+    } catch (err) {
+      const msg = err.response?.data?.message;
+      if (msg?.includes("wait")) setTimer(30);
+      setMessage(msg || "Error: Failed to send OTP.");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (email) setEmailValue(email.toLowerCase());
-    else navigate(ROUTES.LOGIN);
+    if (email) {
+      const normalized = email.toLowerCase();
+      setEmailValue(normalized);
+      if (!autoSentRef.current) {
+        autoSentRef.current = true;
+        handleSendOtp(normalized);
+      }
+    } else {
+      navigate(ROUTES.LOGIN);
+    }
   }, [email, navigate]);
 
   useEffect(() => {
@@ -47,22 +75,6 @@ const VerifyOTP = () => {
   const handleKeyDown = (e, index) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       inputRefs.current[index - 1].focus();
-    }
-  };
-
-  const handleSendOtp = async () => {
-    setMessage("");
-    try {
-      setOtpLoading(true);
-      await api.post("/auth/send-otp", { email: emailValue });
-      setTimer(30);
-      setMessage("Success: OTP sent successfully.");
-    } catch (err) {
-      const msg = err.response?.data?.message;
-      if (msg?.includes("wait")) setTimer(30);
-      setMessage(msg || "Error: Failed to send OTP.");
-    } finally {
-      setOtpLoading(false);
     }
   };
 

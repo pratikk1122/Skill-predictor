@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, Mail, Lock, Camera, Trash2, ChevronDown } from 'lucide-react';
+import { User, Mail, Lock, Camera, Trash2, ChevronDown, Menu } from 'lucide-react';
 
-const Navbar = ({ profileImage, setProfileImage, fileInputRef, studentName, studentEmail }) => {
+const Navbar = ({ profileImage, setProfileImage, fileInputRef, studentName, studentEmail, onToggleSidebar }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -20,7 +20,16 @@ const Navbar = ({ profileImage, setProfileImage, fileInputRef, studentName, stud
   }, []);
 
   return (
-    <header className="flex justify-end items-center mb-10">
+    <header className="flex justify-between md:justify-end items-center mb-6 sm:mb-10">
+      {/* Mobile Hamburger Menu */}
+      <button
+        type="button"
+        onClick={onToggleSidebar}
+        className="md:hidden flex items-center justify-center w-10 h-10 bg-white border border-slate-200 rounded-2xl shadow-sm text-slate-700 hover:border-teal-300 transition-all active:scale-95"
+        aria-label="Open menu"
+      >
+        <Menu size={20} className="text-teal-600" />
+      </button>
       <div className="flex items-center gap-6">
         
         <div className="relative" ref={dropdownRef}>
