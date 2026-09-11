@@ -4,6 +4,8 @@ import { ROUTES } from "../routes/routes";
 import api from "../services/api";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
+import MobileBottomNav from "../components/MobileBottomNav";
+import { jsPDF } from "jspdf";
 import { 
   TrendingUp, 
   Target, 
@@ -117,7 +119,112 @@ const StudentAnalytics = () => {
   };
 
   const downloadReport = () => {
-    window.open(`${process.env.REACT_APP_API_URL || ''}/api/analytics/report/${studentId}`, "_blank");
+    try {
+      const studentName = localStorage.getItem("userName") || "Student Candidate";
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+      // Header Banner
+      doc.setFillColor(13, 148, 136); // #0D9488
+      doc.rect(0, 0, 210, 24, "F");
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text("SKILL PREDICTOR AI", 105, 12, { align: "center" });
+      doc.setFontSize(8);
+      doc.text("OFFICIAL PLACEMENT READINESS & SKILL ASSESSMENT REPORT", 105, 18, { align: "center" });
+
+      // Outer Decorative Border
+      doc.setDrawColor(203, 213, 225);
+      doc.setLineWidth(0.5);
+      doc.rect(10, 30, 190, 252);
+
+      // Certificate Title
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(20);
+      doc.text("VERIFIED CANDIDATE ASSESSMENT", 105, 48, { align: "center" });
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 116, 139);
+      doc.text("This credential verifies the technical performance evaluation for:", 105, 56, { align: "center" });
+
+      // Candidate Name
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.setTextColor(13, 148, 136);
+      doc.text(studentName.toUpperCase(), 105, 68, { align: "center" });
+
+      // Divider line
+      doc.setDrawColor(13, 148, 136);
+      doc.setLineWidth(0.6);
+      doc.line(70, 72, 140, 72);
+
+      // Domain Scores Section
+      doc.setFontSize(11);
+      doc.setTextColor(15, 23, 42);
+      doc.text("EVALUATED PERFORMANCE DOMAINS", 20, 86);
+
+      const scores = [
+        ["Resume ATS Optimization", `${performance.find(p => p.name === "Resume")?.score || 0}%`],
+        ["Aptitude & Logical Reasoning", `${performance.find(p => p.name === "Aptitude")?.score || 0}%`],
+        ["Technical & HR AI Interview", `${performance.find(p => p.name === "Interview")?.score || 0}%`],
+        ["Group Discussion Communication", `${performance.find(p => p.name === "GD")?.score || 0}%`],
+      ];
+
+      let y = 96;
+      scores.forEach(([domain, val]) => {
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(20, y - 5, 170, 9, 2, 2, "F");
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.setTextColor(51, 65, 85);
+        doc.text(domain, 25, y + 1.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(13, 148, 136);
+        doc.text(val, 180, y + 1.5, { align: "right" });
+        y += 13;
+      });
+
+      // Activity summary
+      y += 8;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(15, 23, 42);
+      doc.text("ASSESSMENT ACTIVITY AUDIT", 20, y);
+
+      y += 10;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      doc.setTextColor(71, 85, 105);
+      const activities = [
+        `Mock Interviews Completed: ${detailedCounts.mockInterviews || 0}`,
+        `Aptitude Tests Taken: ${detailedCounts.aptitudeTests || 0}`,
+        `Resume Scans & ATS Evaluations: ${detailedCounts.resumeScans || 0}`,
+        `Company Prep Modules Explored: ${detailedCounts.companyPrepTests || 0}`,
+        `Group Discussion Sessions: ${detailedCounts.gdParticipations || 0}`
+      ];
+      activities.forEach(act => {
+        doc.text(`•   ${act}`, 25, y);
+        y += 7.5;
+      });
+
+      // Verification Badge Box
+      doc.setFillColor(240, 253, 250);
+      doc.roundedRect(20, 222, 170, 28, 4, 4, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(15, 118, 110);
+      doc.text("VERIFIED BY SKILL PREDICTOR AI ENGINE", 105, 233, { align: "center" });
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Issue Date: ${new Date().toLocaleDateString()} | Credential ID: SP-${Math.random().toString(36).substring(2, 9).toUpperCase()}`, 105, 241, { align: "center" });
+
+      doc.save(`SkillPredictor_Certificate_${studentName.replace(/\s+/g, "_")}.pdf`);
+    } catch (e) {
+      console.error("PDF generation failed:", e);
+      alert("Failed to generate PDF. Please try again.");
+    }
   };
 
   if (loading) return (
@@ -133,11 +240,11 @@ const StudentAnalytics = () => {
     <div className="flex h-screen bg-teeny-greeny text-text-dark font-sans selection:bg-blue-greeny/20">
       <Sidebar />
 
-      <main className="flex-1 overflow-y-auto p-6 lg:p-10 scroll-smooth">
+      <main className="flex-1 overflow-y-auto p-6 lg:p-10 pb-28 md:pb-10 scroll-smooth">
         <Navbar />
 
         {/* Action Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <button 
             onClick={() => navigate(ROUTES.STUDENT_DASHBOARD)} 
             className="flex items-center gap-2 px-6 py-3 bg-white border border-blue-greeny/10 rounded-2xl text-[11px] font-black text-blue-greeny hover:bg-blue-greeny hover:text-white transition-all shadow-sm active:scale-95"
@@ -147,7 +254,14 @@ const StudentAnalytics = () => {
           </button>
 
           <div className="flex items-center gap-3">
-             <span className="px-5 py-2.5 bg-slate-900 text-white text-[10px] font-black rounded-2xl uppercase tracking-[0.2em] border border-slate-800 shadow-xl">
+             <button
+               onClick={downloadReport}
+               className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-black rounded-2xl uppercase tracking-wider shadow-lg shadow-teal-600/20 active:scale-95 transition-all"
+             >
+               <Download size={14} />
+               DOWNLOAD CERTIFICATE
+             </button>
+             <span className="hidden sm:inline-block px-5 py-2.5 bg-slate-900 text-white text-[10px] font-black rounded-2xl uppercase tracking-[0.2em] border border-slate-800 shadow-xl">
                Personal Analytics Engine
              </span>
           </div>
@@ -269,6 +383,9 @@ const StudentAnalytics = () => {
           </div>
         </div>
       </main>
+
+      {/* 📱 Mobile App Bottom Navigation Bar */}
+      <MobileBottomNav />
     </div>
   );
 };

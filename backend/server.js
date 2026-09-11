@@ -24,6 +24,16 @@ app.get("/", (req, res) => {
   res.send("Server is Running and Socket is Active!");
 });
 
+// 🔥 ZERO-COLD-START HEALTH CHECK ENDPOINT
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "online",
+    service: "skill-predictor-backend",
+    uptimeSeconds: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString()
+  });
+});
+
 const server = http.createServer(app);
 
 const io = new Server(server, {
@@ -40,4 +50,19 @@ setupGDSockets(io);
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+
+  // 🔥 ZERO COLD-START KEEP-ALIVE (Pings server every 14 min so Render free tier never sleeps)
+  const isProd = process.env.NODE_ENV === "production" || process.env.RENDER;
+  if (isProd) {
+    const keepAliveUrl = "https://skill-predictor-backend.onrender.com/api/health";
+    const https = require("https");
+    setInterval(() => {
+      https.get(keepAliveUrl, (res) => {
+        console.log(`[KeepAlive Ping] PING OK -> Status ${res.statusCode} at ${new Date().toLocaleTimeString()}`);
+      }).on("error", (err) => {
+        console.warn(`[KeepAlive Ping Warning]: ${err.message}`);
+      });
+    }, 14 * 60 * 1000); // Every 14 mins
+    console.log("⚡ Zero-Cold-Start KeepAlive active: Pinging backend every 14 mins.");
+  }
 });

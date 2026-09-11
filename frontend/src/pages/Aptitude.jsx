@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios'; // 🔥 Requirement: Added for session creation
 import { ROUTES } from "../routes/routes";
+import MobileBottomNav from "../components/MobileBottomNav";
 
 // --- STATIC DATA FOR CATEGORIES ---
 const aptitudeCategories = [
@@ -154,6 +155,9 @@ const Aptitude = () => {
         </div>
 
       </div>
+
+      {/* 📱 Mobile Bottom Navigation Bar */}
+      <MobileBottomNav />
     </div>
   );
 };

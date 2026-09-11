@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'; // ✨ Animations upgra
 import api from "../services/api";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
+import MobileBottomNav from "../components/MobileBottomNav";
 
 const StudentDashboard = () => {
   const navigate = useNavigate();
@@ -88,7 +89,7 @@ const StudentDashboard = () => {
         onClose={() => setIsSidebarOpen(false)} 
       />
 
-      <main className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12 relative z-10 scroll-smooth">
+      <main className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12 pb-28 md:pb-12 relative z-10 scroll-smooth">
         <Navbar 
           profileImage={profileImage} 
           setProfileImage={setProfileImage}
@@ -180,6 +181,9 @@ const StudentDashboard = () => {
           />
         </motion.div>
       </main>
+
+      {/* 📱 Mobile App Bottom Navigation Bar */}
+      <MobileBottomNav />
     </div>
   );
 };

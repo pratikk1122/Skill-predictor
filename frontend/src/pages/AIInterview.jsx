@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import api from "../services/api";
 import { jsPDF } from "jspdf";
 import { useNavigate } from "react-router-dom";
+import MobileBottomNav from "../components/MobileBottomNav";
 import {
   UploadCloud,
   Loader2,
@@ -277,13 +278,16 @@ const AIInterview = () => {
             ))}
           </div>
         </div>
+
+        {/* 📱 Mobile Bottom Navigation Bar */}
+        <MobileBottomNav />
       </div>
     );
   }
 
   /* ================= INTERVIEW UI ================= */
   return (
-    <div className="min-h-screen bg-teeny-greeny p-6 md:p-10 font-sans text-text-dark">
+    <div className="min-h-screen bg-teeny-greeny p-6 md:p-10 pb-28 md:pb-10 font-sans text-text-dark">
       <div className="max-w-4xl mx-auto bg-white shadow-2xl rounded-[2.5rem] border border-blue-greeny/5 p-8 md:p-12 animate-in slide-in-from-bottom-4 duration-500">
 
         {!sessionId ? (
@@ -417,6 +421,9 @@ const AIInterview = () => {
           </div>
         )}
       </div>
+
+      {/* 📱 Mobile Bottom Navigation Bar */}
+      <MobileBottomNav />
     </div>
   );
 };

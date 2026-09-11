@@ -1,0 +1,24 @@
+{
+  "name": "Skill Predictor AI",
+  "short_name": "SkillPredictor",
+  "description": "AI-Powered Placement & Career Preparation Platform. Mock Interviews, ATS Resume Scorer, and Aptitude Tests.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#0D9488",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

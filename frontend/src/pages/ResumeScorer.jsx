@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import MobileBottomNav from "../components/MobileBottomNav";
 
 const ResumeScorer = () => {
   const [isScanning, setIsScanning] = useState(false);
@@ -8,6 +9,7 @@ const ResumeScorer = () => {
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [targetJob, setTargetJob] = useState("");
   // ✅ New state to store original file buffer for annotation
   const [fileBase64, setFileBase64] = useState("");
 
@@ -81,7 +83,7 @@ const ResumeScorer = () => {
       
       const formData = new FormData();
       formData.append("resume", file);
-      formData.append("jobDescription", "General Professional Analysis");
+      formData.append("jobDescription", targetJob.trim() || "General Software Engineering Profile");
 
       const response = await axios.post(
         `${API_URL}/resume-intelligence/analyze`,
@@ -108,7 +110,7 @@ const ResumeScorer = () => {
   };
 
   return (
-    <div className="min-h-screen bg-teeny-greeny font-sans text-text-dark selection:bg-blue-greeny/20">
+    <div className="min-h-screen bg-teeny-greeny font-sans text-text-dark selection:bg-blue-greeny/20 pb-28 md:pb-10">
       <div className="max-w-7xl mx-auto p-6 md:p-10">
         
         {/* HEADER SECTION */}
@@ -167,9 +169,27 @@ const ResumeScorer = () => {
               <i className="fas fa-cloud-upload-alt text-4xl"></i>
             </div>
             <h2 className="text-4xl font-heading font-black text-text-dark mb-4 uppercase">Analyze Your Potential</h2>
-            <p className="text-text-light mb-12 max-w-lg mx-auto font-bold leading-relaxed">
+            <p className="text-text-light mb-8 max-w-lg mx-auto font-bold leading-relaxed">
               Upload your resume to receive a comprehensive ATS evaluation, recruiter simulation, and strategic improvement suggestions.
             </p>
+
+            {/* 🎯 TARGET JOB ROLE / JD INPUT (OPTIONAL) */}
+            <div className="max-w-md mx-auto mb-8 text-left bg-slate-50 p-5 rounded-2xl border border-slate-200/80 shadow-inner">
+              <label htmlFor="target-job-input" className="block text-[11px] font-black uppercase tracking-wider text-slate-600 mb-2">
+                🎯 Target Company / Role <span className="text-slate-400 font-normal">(Optional for ATS Match)</span>
+              </label>
+              <input
+                id="target-job-input"
+                type="text"
+                value={targetJob}
+                onChange={(e) => setTargetJob(e.target.value)}
+                placeholder="e.g. Infosys Java Developer, TCS Digital SDE, React Intern"
+                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-greeny/30 focus:border-blue-greeny transition-all"
+              />
+              <p className="text-[10px] text-slate-400 mt-2 font-medium">
+                Tip: Enter your dream job role to get customized keyword matching recommendations.
+              </p>
+            </div>
 
             <input type="file" id="resume-upload" className="hidden" onChange={handleFileUpload} accept=".pdf,.docx" />
             <label
@@ -316,6 +336,35 @@ const ResumeScorer = () => {
                </div>
             </div>
 
+            {/* 🎯 ATS Target Role Keyword Matching Section */}
+            {result.missingKeywords && result.missingKeywords.length > 0 && (
+              <div className="bg-white p-8 sm:p-10 rounded-[2.5rem] shadow-xl border-2 border-teal-500/20">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                  <div>
+                    <h3 className="text-sm font-black text-teal-800 uppercase tracking-wider flex items-center gap-2">
+                      <i className="fas fa-bullseye text-teal-600"></i> High-Priority ATS Keywords To Add
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Include these industry-standard skills in your projects or summary to significantly improve your recruiter screening score.
+                    </p>
+                  </div>
+                  <span className="self-start sm:self-auto text-[10px] font-black uppercase tracking-widest bg-teal-50 text-teal-700 px-3 py-1.5 rounded-xl border border-teal-200">
+                    {result.missingKeywords.length} Keywords Missing
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2.5">
+                  {result.missingKeywords.map((keyword, i) => (
+                    <span 
+                      key={i} 
+                      className="px-3.5 py-1.5 bg-slate-50 hover:bg-teal-50 text-slate-700 hover:text-teal-800 font-bold text-xs rounded-xl border border-slate-200 transition-colors inline-flex items-center gap-1.5"
+                    >
+                      <i className="fas fa-plus text-[9px] text-teal-600"></i> {keyword}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Bottom Reset Button */}
             <div className="flex flex-col items-center pt-16 pb-20">
               <button
@@ -334,6 +383,9 @@ const ResumeScorer = () => {
           </div>
         )}
       </div>
+
+      {/* 📱 Mobile Bottom Navigation Bar */}
+      <MobileBottomNav />
     </div>
   );
 };
