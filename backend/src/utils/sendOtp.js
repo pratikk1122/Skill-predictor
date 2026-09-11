@@ -12,13 +12,13 @@ const getCleanEmailPass = () => {
   return pass.replace(/\s+/g, "");
 };
 
-// Primary: Direct SSL on port 465 (Cloud-friendly, universally permitted on Render)
+// Primary: Direct SSL on port 465 (Cloud-friendly, universally permitted on paid tiers)
 const createSSLTransporter = () => {
   return nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,
     secure: true,
-    family: 4, // 🔥 Force IPv4 (fixes Render ENETUNREACH IPv6 bug)
+    family: 4, // 🔥 Force IPv4
     auth: {
       user: process.env.EMAIL_USER?.trim(),
       pass: getCleanEmailPass()
@@ -26,9 +26,9 @@ const createSSLTransporter = () => {
     tls: {
       rejectUnauthorized: false
     },
-    connectionTimeout: 12000,
-    greetingTimeout: 8000,
-    socketTimeout: 12000
+    connectionTimeout: 2500, // Fast 2.5s timeout for cloud environments
+    greetingTimeout: 2500,
+    socketTimeout: 3000
   });
 };
 
@@ -41,9 +41,9 @@ const createServiceTransporter = () => {
       user: process.env.EMAIL_USER?.trim(),
       pass: getCleanEmailPass()
     },
-    connectionTimeout: 12000,
-    greetingTimeout: 8000,
-    socketTimeout: 12000
+    connectionTimeout: 2500,
+    greetingTimeout: 2500,
+    socketTimeout: 3000
   });
 };
 
@@ -110,7 +110,16 @@ const sendOtp = async (email, otp) => {
     console.log(`✅ OTP email successfully sent via SMTP 465 (SSL) to: ${email}`);
     return { success: true, delivered: true };
   } catch (sslError) {
-    console.warn("⚠️ SSL Port 465 delivery failed, attempting Service Gmail fallback:", sslError.message);
+    // If Render firewall blocked port 465, don't stall the user with another blocked port
+    if (sslError.code === "ETIMEDOUT" || sslError.message.includes("timeout") || sslError.code === "ENETUNREACH") {
+      console.warn("⚠️ Cloud host firewall blocked SMTP port 465. Returning immediate fallback.");
+      return { 
+        success: true, 
+        delivered: false, 
+        error: "Host firewall blocked outbound SMTP ports (Render Free Tier restriction)." 
+      };
+    }
+
     try {
       const tService = createServiceTransporter();
       await tService.sendMail(mailOptions);
