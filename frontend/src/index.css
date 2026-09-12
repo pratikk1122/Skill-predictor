@@ -14,11 +14,84 @@
 
   --color-text-dark: #2d3748;
   --color-text-light: #718096;
+
+  --color-tech-black: #090d16;
+  --color-tech-slate: #0f172a;
+  --color-tech-surface: #131b2e;
+  --color-sky-accent: #0ea5e9;
+  --color-sky-glow: #38bdf8;
+  --color-cyber-teal: #0d9488;
 }
 
-/* ================= TEXT GRADIENT ================= */
+/* ================= TECH GRID PATTERNS ================= */
+.bg-tech-grid {
+  background-image: linear-gradient(to right, rgba(15, 23, 42, 0.06) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.bg-tech-grid-dark {
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+.bg-dots-pattern {
+  background-image: radial-gradient(rgba(14, 165, 233, 0.15) 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
+}
+
+/* ================= NEO BRUTALIST & TECH SHADOWS ================= */
+.neo-shadow-black {
+  box-shadow: 4px 4px 0px 0px #090d16;
+}
+
+.neo-shadow-sky {
+  box-shadow: 4px 4px 0px 0px #0ea5e9;
+}
+
+.neo-shadow-teal {
+  box-shadow: 4px 4px 0px 0px #0d9488;
+}
+
+.neo-shadow-sm {
+  box-shadow: 2px 2px 0px 0px #090d16;
+}
+
+.neo-btn {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neo-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px #090d16;
+}
+
+.neo-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px 0px #090d16;
+}
+
+.neo-btn-sky:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px #0ea5e9;
+}
+
+.neo-btn-sky:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px 0px #0ea5e9;
+}
+
+/* ================= TEXT GRADIENTS ================= */
 .text-gradient {
-  background: linear-gradient(135deg, #5cbdb9 0%, #319795 100%);
+  background: linear-gradient(135deg, #0ea5e9 0%, #0d9488 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-sky {
+  background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
