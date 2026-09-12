@@ -3,11 +3,8 @@ dns.setDefaultResultOrder("ipv4first");
 const nodemailer = require("nodemailer");
 
 /* ================= 🚀 OPTIMIZED EMAIL TRANSPORTERS ================= */
-const DEFAULT_EMAIL_USER = "pratikkhode1122@gmail.com";
-const DEFAULT_EMAIL_PASS = "mqkg fjfb qbpk tejl";
-
 const getCleanEmailPass = () => {
-  const pass = process.env.EMAIL_PASS || "mqkg fjfb qbpk tejl";
+  const pass = process.env.EMAIL_PASS || "";
   return pass.replace(/\s+/g, "");
 };
 
@@ -18,7 +15,7 @@ const ipv4Lookup = (hostname, options, callback) => {
 
 // 1️⃣ Primary: Port 587 (STARTTLS) with IPv4 lookup
 const createPort587Transporter = () => {
-  const user = (process.env.EMAIL_USER || "pratikkhode1122@gmail.com").trim();
+  const user = (process.env.EMAIL_USER || "").trim();
   const pass = getCleanEmailPass();
   return nodemailer.createTransport({
     host: "smtp.gmail.com",
@@ -40,7 +37,7 @@ const createPort587Transporter = () => {
 
 // 2️⃣ Secondary: Port 465 (SSL) with IPv4 lookup
 const createSSLTransporter = () => {
-  const user = (process.env.EMAIL_USER || "pratikkhode1122@gmail.com").trim();
+  const user = (process.env.EMAIL_USER || "").trim();
   const pass = getCleanEmailPass();
   return nodemailer.createTransport({
     host: "smtp.gmail.com",
@@ -65,7 +62,7 @@ const sendOtp = async (email, otp) => {
   console.log(`🔑 [OTP DISPATCH] Sending strictly to: ${email}`);
   console.log(`======================================================\n`);
 
-  const user = (process.env.EMAIL_USER || "pratikkhode1122@gmail.com").trim();
+  const user = (process.env.EMAIL_USER || "").trim();
   const pass = getCleanEmailPass();
 
   const mailOptions = {

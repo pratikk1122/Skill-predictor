@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 
-const GMAIL_USER = process.env.EMAIL_USER || "pratikkhode1122@gmail.com";
-const GMAIL_PASS = (process.env.EMAIL_PASS || "mqkg fjfb qbpk tejl").replace(/\s+/g, "");
+const GMAIL_USER = (process.env.EMAIL_USER || "").trim();
+const GMAIL_PASS = (process.env.EMAIL_PASS || "").replace(/\s+/g, "");
 
 export default async function handler(req, res) {
   // Allow CORS for backend requests

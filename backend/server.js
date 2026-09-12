@@ -38,13 +38,13 @@ app.get("/api/health", (req, res) => {
 
 // 🔍 SMTP DIAGNOSTIC ENDPOINT
 app.get("/api/debug-smtp", async (req, res) => {
-  const user = (process.env.EMAIL_USER || "pratikkhode1122@gmail.com").trim();
-  const rawPass = process.env.EMAIL_PASS || "mqkg fjfb qbpk tejl";
+  const user = (process.env.EMAIL_USER || "").trim();
+  const rawPass = process.env.EMAIL_PASS || "";
   const pass = rawPass.replace(/\s+/g, "");
 
   const info = {
     hasUser: !!process.env.EMAIL_USER,
-    userValue: user,
+    userValue: user ? user.replace(/(.{3})(.*)(@.*)/, "$1***$3") : "not set",
     hasPass: !!process.env.EMAIL_PASS,
     passLength: pass ? pass.length : 0
   };
