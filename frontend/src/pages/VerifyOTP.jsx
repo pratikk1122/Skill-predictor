@@ -120,6 +120,11 @@ const VerifyOTP = () => {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
 
+      const userData = res.data.user || {};
+      if (userData._id || userData.id) {
+        localStorage.setItem("user", JSON.stringify(userData));
+      }
+
       // ✅ 2. ENHANCED NAME VERIFICATION LOGIC
       let fullName = "";
 

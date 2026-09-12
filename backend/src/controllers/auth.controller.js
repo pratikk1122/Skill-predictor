@@ -122,13 +122,17 @@ exports.verifyOtp = async (req, res) => {
       role: user.role, 
       user: {
         _id: user._id,
+        id: user._id,
         firstName: user.firstName,
         surName: user.surName,
+        name: user.firstName ? `${user.firstName} ${user.surName || ''}`.trim() : (user.name || "User"),
         email: user.email,
-        education: user.education
+        education: user.education,
+        role: user.role
       }
     });
   } catch (err) {
+    console.error("Verify OTP error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -142,15 +146,30 @@ exports.loginWithPassword = async (req, res) => {
     if (!email || !password) return res.status(400).json({ message: "Missing data" });
 
     email = email.trim().toLowerCase();
-    const user = await User.findOne({ email });
+    let user = await User.findOne({ email });
+
+    const isAdminEmail = ADMIN_EMAILS.includes(email);
+
+    // If an official admin logs in and user document doesn't exist yet, initialize it
+    if (isAdminEmail && !user) {
+      user = await User.create({
+        email,
+        role: "admin",
+        isVerified: true,
+        password: await bcrypt.hash(ADMIN_DEFAULT_PASSWORD, 10)
+      });
+    }
 
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
-    if (ADMIN_EMAILS.includes(email) && password === ADMIN_DEFAULT_PASSWORD && !user.password) {
-      return res.json({ requireOtp: true, message: "Initial Admin setup required" });
+    // Validate credentials: check default admin master password or user's hashed password
+    let isMatch = false;
+    if (isAdminEmail && password === ADMIN_DEFAULT_PASSWORD) {
+      isMatch = true;
+    } else if (user.password) {
+      isMatch = await bcrypt.compare(password, user.password);
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
     // Generate 6-digit OTP for login email verification
@@ -158,6 +177,7 @@ exports.loginWithPassword = async (req, res) => {
     user.otp = await bcrypt.hash(otp, 10);
     user.otpExpires = Date.now() + 5 * 60 * 1000;
     user.otpSentAt = new Date();
+    if (isAdminEmail) user.role = "admin";
     await user.save();
 
     const sendResult = await sendOtp(email, otp);
@@ -172,12 +192,16 @@ exports.loginWithPassword = async (req, res) => {
       requireOtp: true, 
       message: "Verification code sent to your email.",
       user: {
+        _id: user._id,
+        id: user._id,
         firstName: user.firstName,
         surName: user.surName,
-        email: user.email
+        email: user.email,
+        role: user.role
       }
     });
   } catch (err) {
+    console.error("Login error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
