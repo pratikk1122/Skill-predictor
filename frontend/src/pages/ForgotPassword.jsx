@@ -44,12 +44,7 @@ const ForgotPassword = () => {
 
     setStep(2);
     setTimer(30); // ⏳ 30s cooldown
-    if (res.data?.fallbackOtp) {
-      setOtp(res.data.fallbackOtp.toString().split(""));
-      setMessage(`Notice: Email delivery delayed. Auto-filled code: ${res.data.fallbackOtp}`);
-    } else {
-      setMessage("Success: OTP sent to your email.");
-    }
+    setMessage("Success: Reset verification code sent strictly to your email inbox.");
   } catch (err) {
     const backendMsg = err.response?.data?.message;
 

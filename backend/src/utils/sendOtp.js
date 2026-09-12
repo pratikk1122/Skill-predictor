@@ -12,13 +12,13 @@ const getCleanEmailPass = () => {
   return pass.replace(/\s+/g, "");
 };
 
-// Primary: Direct SSL on port 465 (Cloud-friendly, universally permitted on paid tiers)
+// Primary: Direct SSL on port 465
 const createSSLTransporter = () => {
   return nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,
     secure: true,
-    family: 4, // 🔥 Force IPv4
+    family: 4, // Force IPv4
     auth: {
       user: process.env.EMAIL_USER?.trim(),
       pass: getCleanEmailPass()
@@ -26,9 +26,9 @@ const createSSLTransporter = () => {
     tls: {
       rejectUnauthorized: false
     },
-    connectionTimeout: 2500, // Fast 2.5s timeout for cloud environments
-    greetingTimeout: 2500,
-    socketTimeout: 3000
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000
   });
 };
 
@@ -36,31 +36,32 @@ const createSSLTransporter = () => {
 const createServiceTransporter = () => {
   return nodemailer.createTransport({
     service: "gmail",
-    family: 4, // 🔥 Force IPv4
+    family: 4, // Force IPv4
     auth: {
       user: process.env.EMAIL_USER?.trim(),
       pass: getCleanEmailPass()
     },
-    connectionTimeout: 2500,
-    greetingTimeout: 2500,
-    socketTimeout: 3000
+    tls: {
+      rejectUnauthorized: false
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000
   });
 };
 
 /* ================= PROFESSIONAL EMAIL OTP ================= */
 const sendOtp = async (email, otp) => {
-  // Always log OTP in console so development, testing, or SMTP outages never block login/signup
   console.log(`\n======================================================`);
-  console.log(`🔑 [OTP DISPATCH] Target: ${email}`);
-  console.log(`🔑 [OTP CODE]     👉  ${otp}  👈 (Valid for 5 mins)`);
+  console.log(`🔑 [OTP DISPATCH] Sending strictly to: ${email}`);
   console.log(`======================================================\n`);
 
   const user = process.env.EMAIL_USER?.trim();
   const pass = getCleanEmailPass();
 
   if (!user || !pass) {
-    console.warn("⚠️ SMTP credentials not configured (EMAIL_USER or EMAIL_PASS missing).");
-    return { success: true, delivered: false, isDev: true, error: "SMTP credentials not configured on server" };
+    console.error("❌ SMTP credentials not configured on server (EMAIL_USER or EMAIL_PASS missing).");
+    return { success: false, delivered: false, error: "SMTP credentials not configured on server" };
   }
 
   const mailOptions = {
@@ -107,30 +108,21 @@ const sendOtp = async (email, otp) => {
   try {
     const tSSL = createSSLTransporter();
     await tSSL.sendMail(mailOptions);
-    console.log(`✅ OTP email successfully sent via SMTP 465 (SSL) to: ${email}`);
+    console.log(`✅ OTP email successfully delivered via SSL 465 to: ${email}`);
     return { success: true, delivered: true };
   } catch (sslError) {
-    // If Render firewall blocked port 465, don't stall the user with another blocked port
-    if (sslError.code === "ETIMEDOUT" || sslError.message.includes("timeout") || sslError.code === "ENETUNREACH") {
-      console.warn("⚠️ Cloud host firewall blocked SMTP port 465. Returning immediate fallback.");
-      return { 
-        success: true, 
-        delivered: false, 
-        error: "Host firewall blocked outbound SMTP ports (Render Free Tier restriction)." 
-      };
-    }
-
+    console.warn(`⚠️ Primary SSL 465 failed (${sslError.message}), attempting Gmail Service transport...`);
     try {
       const tService = createServiceTransporter();
       await tService.sendMail(mailOptions);
-      console.log(`✅ OTP email successfully sent via Service Gmail fallback to: ${email}`);
+      console.log(`✅ OTP email successfully delivered via Gmail Service to: ${email}`);
       return { success: true, delivered: true };
     } catch (fallbackError) {
-      console.error("❌ ALL SMTP DISPATCH METHODS FAILED:", fallbackError.message);
+      console.error(`❌ Email delivery to ${email} failed:`, fallbackError.message);
       return { 
-        success: true, 
+        success: false, 
         delivered: false, 
-        error: `SSL 465: ${sslError.message} | Service: ${fallbackError.message}` 
+        error: fallbackError.message || sslError.message 
       };
     }
   }

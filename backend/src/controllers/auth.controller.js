@@ -61,12 +61,14 @@ exports.sendOtp = async (req, res) => {
 
     const sendResult = await sendOtp(email, otp);
 
+    if (!sendResult.success) {
+      return res.status(500).json({ 
+        message: "Failed to deliver verification email. Please check your email address and try again." 
+      });
+    }
+
     res.json({
-      message: "OTP sent successfully",
-      delivered: sendResult?.delivered || false,
-      smtpError: sendResult?.error || undefined,
-      fallbackOtp: sendResult?.delivered ? undefined : otp,
-      devNote: sendResult?.delivered ? undefined : "If email delivery is delayed, use the fallback code provided."
+      message: "Verification code sent to your email inbox."
     });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
@@ -74,7 +76,7 @@ exports.sendOtp = async (req, res) => {
 };
 
 /* =====================================================
-    VERIFY OTP (FOR SIGNUP & LOGOUT CASES)
+    VERIFY OTP (FOR SIGNUP & LOGIN)
 ===================================================== */
 exports.verifyOtp = async (req, res) => {
   try {
@@ -102,6 +104,7 @@ exports.verifyOtp = async (req, res) => {
     if (education) user.education = education;
 
     user.lastOtpVerifiedAt = new Date();
+    user.lastLoginAt = new Date();
     user.forceOtpOnNextLogin = false; 
     user.isVerified = true;
     user.activeSessionId = uuidv4(); 
@@ -111,14 +114,12 @@ exports.verifyOtp = async (req, res) => {
 
     const token = jwt.sign(
       { id: user._id, email: user.email, role: user.role, sessionId: user.activeSessionId },
-      process.env.JWT_SECRET, { expiresIn: "7d" }
+      process.env.JWT_SECRET, { expiresIn: "30d" }
     );
 
     res.json({
       token, 
       role: user.role, 
-      showTrustDisclaimer: true,
-      disclaimer: "You can log in without OTP for the next 7 days unless you logout.",
       user: {
         _id: user._id,
         firstName: user.firstName,
@@ -152,45 +153,28 @@ exports.loginWithPassword = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    let requireOtp = false;
+    // Generate 6-digit OTP for login email verification
+    const otp = generateOTP();
+    user.otp = await bcrypt.hash(otp, 10);
+    user.otpExpires = Date.now() + 5 * 60 * 1000;
+    user.otpSentAt = new Date();
+    await user.save();
 
-    // Only unverified accounts need OTP verification
-    if (user.isVerified === false) {
-      requireOtp = true;
-    }
+    const sendResult = await sendOtp(email, otp);
 
-    if (requireOtp) {
-      return res.json({ 
-        requireOtp: true, 
-        message: "Email verification required",
-        user: {
-          firstName: user.firstName,
-          surName: user.surName,
-          email: user.email
-        }
+    if (!sendResult.success) {
+      return res.status(500).json({ 
+        message: "Failed to send verification code to your email. Please try again." 
       });
     }
 
-    user.lastLoginAt = new Date();
-    user.forceOtpOnNextLogin = false;
-    await user.save();
-
-    const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role, sessionId: user.activeSessionId },
-      process.env.JWT_SECRET, { expiresIn: "30d" }
-    );
-
-    res.json({ 
-      message: "Login successful", 
-      token, 
-      role: user.role, 
-      requireOtp: false,
+    return res.json({ 
+      requireOtp: true, 
+      message: "Verification code sent to your email.",
       user: {
-        _id: user._id,
         firstName: user.firstName,
         surName: user.surName,
-        email: user.email,
-        education: user.education
+        email: user.email
       }
     });
   } catch (err) {
@@ -215,7 +199,7 @@ exports.logout = async (req, res) => {
 };
 
 /* =====================================================
-    FORGOT PASSWORD - STEP 1 (Non-Blocking OTP)
+    FORGOT PASSWORD - STEP 1 (Strict Email OTP)
 ===================================================== */
 exports.forgotPassword = async (req, res) => {
   try {
@@ -250,12 +234,14 @@ exports.forgotPassword = async (req, res) => {
 
     const sendResult = await sendOtp(email, otp);
 
+    if (!sendResult.success) {
+      return res.status(500).json({ 
+        message: "Failed to send reset code to your email. Please try again." 
+      });
+    }
+
     res.json({
-      message: "OTP sent successfully",
-      delivered: sendResult?.delivered || false,
-      smtpError: sendResult?.error || undefined,
-      fallbackOtp: sendResult?.delivered ? undefined : otp,
-      devNote: sendResult?.delivered ? undefined : "If email delivery is delayed, use the fallback code provided."
+      message: "Reset code sent to your email inbox."
     });
   } catch (err) {
     console.error("FORGOT PASSWORD ERROR 👉", err);

@@ -8,7 +8,7 @@ const VerifyOTP = () => {
   const navigate = useNavigate();
 
   // Location state se signup/login ka data nikalna
-  const { email, password, mode, firstName, surName, mobile, education } = location.state || {};
+  const { email, password, mode, firstName, surName, mobile, otpSent } = location.state || {};
   const [emailValue, setEmailValue] = useState("");
   const [otp, setOtp] = useState(new Array(6).fill(""));
   const [message, setMessage] = useState("");
@@ -28,34 +28,16 @@ const VerifyOTP = () => {
     if (!toEmail) return;
     setMessage("");
 
-    // If request takes >3s on Render free tier, notify the user so they know it's not frozen
-    const wakeTimer = setTimeout(() => {
-      setMessage("⏳ Waking up secure cloud server, please hold on...");
-    }, 3000);
-
     try {
       setOtpLoading(true);
       const res = await api.post("/auth/send-otp", { email: toEmail.toLowerCase() });
-      clearTimeout(wakeTimer);
       setTimer(30);
-      if (res.data?.delivered === false) {
-        if (res.data?.fallbackOtp) {
-          const digits = res.data.fallbackOtp.toString().split("");
-          setOtp(digits);
-          setMessage(`Notice: Email server delivery delayed. Auto-filled code: ${res.data.fallbackOtp}`);
-        } else {
-          setMessage("⚠️ OTP generated. If email delay occurs, check Spam/Promotions or retry shortly.");
-        }
-      } else {
-        setMessage("Success: OTP sent to your email inbox.");
-      }
+      setMessage("Success: Verification code sent strictly to your email inbox.");
     } catch (err) {
-      clearTimeout(wakeTimer);
       const msg = err.response?.data?.message;
       if (msg?.includes("wait")) setTimer(30);
-      setMessage(msg || "Error: Failed to send OTP.");
+      setMessage(msg || "Error: Failed to send verification code. Please check your email address.");
     } finally {
-      clearTimeout(wakeTimer);
       setOtpLoading(false);
     }
   };
@@ -66,12 +48,18 @@ const VerifyOTP = () => {
       setEmailValue(normalized);
       if (!autoSentRef.current) {
         autoSentRef.current = true;
-        handleSendOtp(normalized);
+        if (otpSent) {
+          // Code already sent via loginWithPassword
+          setTimer(30);
+          setMessage("Success: Verification code sent strictly to your email inbox.");
+        } else {
+          handleSendOtp(normalized);
+        }
       }
     } else {
       navigate(ROUTES.LOGIN);
     }
-  }, [email, navigate]);
+  }, [email, navigate, otpSent]);
 
   useEffect(() => {
     let interval;
@@ -123,7 +111,7 @@ const VerifyOTP = () => {
       setLoading(true);
       const payload = { 
         email: emailValue, otp: finalOtp,
-        password, firstName, surName, mobile, education 
+        password, firstName, surName, mobile 
       };
 
       const res = await api.post("/auth/verify-otp", payload);

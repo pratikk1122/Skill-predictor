@@ -80,7 +80,8 @@ const Login = () => {
             email, 
             mode: "login",
             firstName: response.data.user?.firstName,
-            surName: response.data.user?.surName
+            surName: response.data.user?.surName,
+            otpSent: true
           } 
         });
         return;
@@ -125,9 +126,9 @@ const Login = () => {
 
   const handleSignup = (e) => {
     if (e) e.preventDefault();
-    const { firstName, surName, mobile, education, email, password } = form;
+    const { firstName, surName, mobile, email, password } = form;
 
-    if (!firstName || !surName || !mobile || !education || !email || !password) {
+    if (!firstName || !surName || !mobile || !email || !password) {
       alert("All fields are mandatory.");
       return;
     }
@@ -138,7 +139,7 @@ const Login = () => {
 
     navigate(ROUTES.VERIFY_OTP, {
       state: { 
-        firstName, surName, mobile, education, 
+        firstName, surName, mobile, 
         email: email.trim().toLowerCase(), 
         password,
         mode: "signup" 
@@ -198,7 +199,7 @@ const Login = () => {
                   onChange={handleChange} 
                 />
               </div>
-              <div className="relative">
+              <div className="relative md:col-span-2">
                 <i className="fas fa-phone absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-xs"></i>
                 <input 
                   id="signup-mobile"
@@ -210,22 +211,6 @@ const Login = () => {
                   className="w-full pl-10 pr-4 py-3.5 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-[#5cbdb9]/20 outline-none transition-all" 
                   onChange={handleChange} 
                 />
-              </div>
-              <div className="relative">
-                <i className="fas fa-university absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-xs"></i>
-                <select 
-                  id="signup-education"
-                  name="education" 
-                  value={form.education}
-                  className="w-full pl-10 pr-4 py-3.5 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-[#5cbdb9]/20 outline-none appearance-none transition-all text-slate-700" 
-                  onChange={handleChange}
-                >
-                  <option value="">Select Education</option>
-                  <option value="B.Tech">B.Tech</option>
-                  <option value="BCA">BCA</option>
-                  <option value="MCA">MCA</option>
-                  <option value="B.Sc">B.Sc</option>
-                </select>
               </div>
             </div>
           )}

@@ -18,7 +18,6 @@ const Signup = () => {
     firstName: "",
     surName: "",
     mobile: "",
-    education: "",
     email: "",
     password: ""
   });
@@ -37,9 +36,9 @@ const Signup = () => {
   const handleSubmit = () => {
     console.log("🔥 CREATE ACCOUNT CLICKED");
 
-    const { firstName, surName, mobile, education, email, password } = form;
+    const { firstName, surName, mobile, email, password } = form;
 
-    if (!firstName || !surName || !mobile || !education || !email || !password) {
+    if (!firstName || !surName || !mobile || !email || !password) {
       setError("All fields are required");
       return;
     }
@@ -56,7 +55,6 @@ const Signup = () => {
         firstName: firstName.trim(),
         surName: surName.trim(),
         mobile: mobile.trim(),
-        education,
         email: email.trim().toLowerCase(),
         password,
         mode: "signup"
@@ -120,19 +118,6 @@ const Signup = () => {
             className="input"
             onChange={handleChange}
           />
-
-          <select
-            id="signup-education"
-            name="education"
-            value={form.education}
-            className="input"
-            onChange={handleChange}
-          >
-            <option value="">Education</option>
-            <option value="B.Tech">B.Tech</option>
-            <option value="BCA">BCA</option>
-            <option value="MCA">MCA</option>
-          </select>
 
           <input
             id="signup-email"
