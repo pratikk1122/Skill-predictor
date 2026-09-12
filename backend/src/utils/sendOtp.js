@@ -3,50 +3,59 @@ dns.setDefaultResultOrder("ipv4first");
 const nodemailer = require("nodemailer");
 
 /* ================= 🚀 OPTIMIZED EMAIL TRANSPORTERS ================= */
-if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-  console.error("❌ EMAIL ENV VARIABLES MISSING");
-}
+const DEFAULT_EMAIL_USER = "pratikkhode1122@gmail.com";
+const DEFAULT_EMAIL_PASS = "mqkg fjfb qbpk tejl";
 
 const getCleanEmailPass = () => {
-  const pass = process.env.EMAIL_PASS || "";
+  const pass = process.env.EMAIL_PASS || "mqkg fjfb qbpk tejl";
   return pass.replace(/\s+/g, "");
 };
 
-// Primary: Direct SSL on port 465
+// Custom DNS lookup to strictly enforce IPv4 (prevents ENETUNREACH on Render/cloud Linux)
+const ipv4Lookup = (hostname, options, callback) => {
+  dns.lookup(hostname, { family: 4 }, callback);
+};
+
+// 1️⃣ Primary: Port 587 (STARTTLS) with IPv4 lookup
+const createPort587Transporter = () => {
+  const user = (process.env.EMAIL_USER || "pratikkhode1122@gmail.com").trim();
+  const pass = getCleanEmailPass();
+  return nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, // Must be false for 587 STARTTLS
+    requireTLS: true,
+    family: 4,
+    lookup: ipv4Lookup,
+    auth: { user, pass },
+    tls: {
+      servername: "smtp.gmail.com",
+      rejectUnauthorized: false
+    },
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 10000
+  });
+};
+
+// 2️⃣ Secondary: Port 465 (SSL) with IPv4 lookup
 const createSSLTransporter = () => {
+  const user = (process.env.EMAIL_USER || "pratikkhode1122@gmail.com").trim();
+  const pass = getCleanEmailPass();
   return nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,
     secure: true,
-    family: 4, // Force IPv4
-    auth: {
-      user: process.env.EMAIL_USER?.trim(),
-      pass: getCleanEmailPass()
-    },
+    family: 4,
+    lookup: ipv4Lookup,
+    auth: { user, pass },
     tls: {
+      servername: "smtp.gmail.com",
       rejectUnauthorized: false
     },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000
-  });
-};
-
-// Fallback: Gmail Service (Port 587 STARTTLS)
-const createServiceTransporter = () => {
-  return nodemailer.createTransport({
-    service: "gmail",
-    family: 4, // Force IPv4
-    auth: {
-      user: process.env.EMAIL_USER?.trim(),
-      pass: getCleanEmailPass()
-    },
-    tls: {
-      rejectUnauthorized: false
-    },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 10000
   });
 };
 
@@ -56,13 +65,8 @@ const sendOtp = async (email, otp) => {
   console.log(`🔑 [OTP DISPATCH] Sending strictly to: ${email}`);
   console.log(`======================================================\n`);
 
-  const user = process.env.EMAIL_USER?.trim();
+  const user = (process.env.EMAIL_USER || "pratikkhode1122@gmail.com").trim();
   const pass = getCleanEmailPass();
-
-  if (!user || !pass) {
-    console.error("❌ SMTP credentials not configured on server (EMAIL_USER or EMAIL_PASS missing).");
-    return { success: false, delivered: false, error: "SMTP credentials not configured on server" };
-  }
 
   const mailOptions = {
     from: `"Skill Predictor Security" <${user}>`,
@@ -105,24 +109,26 @@ const sendOtp = async (email, otp) => {
     `
   };
 
+  // 1️⃣ Try Port 587 STARTTLS first (standard for cloud environments)
   try {
-    const tSSL = createSSLTransporter();
-    await tSSL.sendMail(mailOptions);
-    console.log(`✅ OTP email successfully delivered via SSL 465 to: ${email}`);
-    return { success: true, delivered: true };
-  } catch (sslError) {
-    console.warn(`⚠️ Primary SSL 465 failed (${sslError.message}), attempting Gmail Service transport...`);
+    const t587 = createPort587Transporter();
+    await t587.sendMail(mailOptions);
+    console.log(`✅ OTP email successfully delivered via Port 587 (STARTTLS) to: ${email}`);
+    return { success: true, delivered: true, transport: "Port 587 STARTTLS" };
+  } catch (port587Error) {
+    console.warn(`⚠️ Port 587 STARTTLS failed (${port587Error.message}), attempting SSL 465 fallback...`);
+    // 2️⃣ Fallback to SSL 465
     try {
-      const tService = createServiceTransporter();
-      await tService.sendMail(mailOptions);
-      console.log(`✅ OTP email successfully delivered via Gmail Service to: ${email}`);
-      return { success: true, delivered: true };
-    } catch (fallbackError) {
-      console.error(`❌ Email delivery to ${email} failed:`, fallbackError.message);
+      const tSSL = createSSLTransporter();
+      await tSSL.sendMail(mailOptions);
+      console.log(`✅ OTP email successfully delivered via SSL 465 to: ${email}`);
+      return { success: true, delivered: true, transport: "Port 465 SSL" };
+    } catch (sslError) {
+      console.error(`❌ Both SMTP transports failed to deliver to ${email}: 587: ${port587Error.message} | 465: ${sslError.message}`);
       return { 
         success: false, 
         delivered: false, 
-        error: fallbackError.message || sslError.message 
+        error: `587: ${port587Error.message} | 465: ${sslError.message}`
       };
     }
   }

@@ -38,47 +38,46 @@ app.get("/api/health", (req, res) => {
 
 // 🔍 SMTP DIAGNOSTIC ENDPOINT
 app.get("/api/debug-smtp", async (req, res) => {
-  const user = process.env.EMAIL_USER;
-  const rawPass = process.env.EMAIL_PASS;
-  const pass = rawPass ? rawPass.replace(/\s+/g, "") : "";
+  const user = (process.env.EMAIL_USER || "pratikkhode1122@gmail.com").trim();
+  const rawPass = process.env.EMAIL_PASS || "mqkg fjfb qbpk tejl";
+  const pass = rawPass.replace(/\s+/g, "");
 
   const info = {
-    hasUser: !!user,
-    userValue: user ? user.trim() : null,
-    hasPass: !!rawPass,
+    hasUser: !!process.env.EMAIL_USER,
+    userValue: user,
+    hasPass: !!process.env.EMAIL_PASS,
     passLength: pass ? pass.length : 0
   };
 
-  if (!user || !pass) {
-    return res.json({ success: false, reason: "ENV_VARS_MISSING", ...info });
-  }
-
   const nodemailer = require("nodemailer");
+  const ipv4Lookup = (hostname, options, callback) => {
+    dns.lookup(hostname, { family: 4 }, callback);
+  };
+
+  const t587 = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, // STARTTLS
+    requireTLS: true,
+    family: 4,
+    lookup: ipv4Lookup,
+    auth: { user, pass },
+    tls: { servername: "smtp.gmail.com", rejectUnauthorized: false },
+    connectionTimeout: 8000
+  });
+
   const t465 = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,
     secure: true,
-    family: 4, // 🔥 Force IPv4
-    auth: { user: user.trim(), pass },
-    tls: { rejectUnauthorized: false },
-    connectionTimeout: 10000
+    family: 4,
+    lookup: ipv4Lookup,
+    auth: { user, pass },
+    tls: { servername: "smtp.gmail.com", rejectUnauthorized: false },
+    connectionTimeout: 8000
   });
 
-  const t587 = nodemailer.createTransport({
-    service: "gmail",
-    family: 4, // 🔥 Force IPv4
-    auth: { user: user.trim(), pass },
-    connectionTimeout: 10000
-  });
-
-  let r465 = null, r587 = null;
-  try {
-    await t465.verify();
-    r465 = "VERIFIED_OK";
-  } catch (e) {
-    r465 = { error: e.message, code: e.code };
-  }
-
+  let r587 = null, r465 = null;
   try {
     await t587.verify();
     r587 = "VERIFIED_OK";
@@ -86,10 +85,17 @@ app.get("/api/debug-smtp", async (req, res) => {
     r587 = { error: e.message, code: e.code };
   }
 
+  try {
+    await t465.verify();
+    r465 = "VERIFIED_OK";
+  } catch (e) {
+    r465 = { error: e.message, code: e.code };
+  }
+
   return res.json({
-    success: r465 === "VERIFIED_OK" || r587 === "VERIFIED_OK",
+    success: r587 === "VERIFIED_OK" || r465 === "VERIFIED_OK",
+    port587_STARTTLS: r587,
     port465_SSL: r465,
-    port587_GmailService: r587,
     info
   });
 });

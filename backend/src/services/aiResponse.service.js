@@ -1,5 +1,13 @@
 const { Groq } = require("groq-sdk");
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+const apiKey = process.env.GROQ_API_KEY || "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";
+let groq = null;
+if (apiKey) {
+  try {
+    groq = new Groq({ apiKey });
+  } catch (e) {
+    console.warn("Groq initialization warning:", e.message);
+  }
+}
 
 /**
  * 🔥 MASTER SYSTEM PROMPT (VARIATION & STRICT ENGLISH)

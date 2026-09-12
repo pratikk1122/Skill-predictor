@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -17,7 +18,7 @@ try {
   app.use("/api/auth", authRoutes);
   console.log("✅ Auth routes mounted");
 } catch (err) {
-  console.warn("⚠️ auth.routes not found");
+  console.warn("⚠️ auth.routes failed to mount:", err.message);
 }
 
 /* ================= ADMIN ROUTES ================= */
