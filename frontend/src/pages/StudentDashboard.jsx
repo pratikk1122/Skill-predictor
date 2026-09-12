@@ -89,7 +89,7 @@ const StudentDashboard = () => {
         onClose={() => setIsSidebarOpen(false)} 
       />
 
-      <main className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12 pb-28 md:pb-12 relative z-10 scroll-smooth">
+      <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-12 pb-28 md:pb-12 relative z-10 scroll-smooth">
         <Navbar 
           profileImage={profileImage} 
           setProfileImage={setProfileImage}
@@ -104,27 +104,27 @@ const StudentDashboard = () => {
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="mb-8 sm:mb-12 mt-3 sm:mt-6"
+          className="mb-4 sm:mb-8 lg:mb-12 mt-1 sm:mt-4 lg:mt-6"
         >
-          <h1 className="text-2xl sm:text-4xl font-black text-slate-800 tracking-tight leading-tight">
+          <h1 className="text-xl sm:text-3xl lg:text-4xl font-black text-slate-800 tracking-tight leading-tight">
             Welcome back, <span className="text-teal-600 capitalize">{studentInfo.name}</span>! 👋
           </h1>
           <motion.p 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-slate-500 mt-1 sm:mt-2 text-sm sm:text-lg font-medium"
+            className="text-slate-500 mt-1 sm:mt-2 text-xs sm:text-base lg:text-lg font-medium"
           >
             Your path to professional excellence starts here.
           </motion.p>
         </motion.div>
 
-        {/* Animated Grid System */}
+        {/* Animated Grid System: 2 Columns on Mobile, 3 on Desktop */}
         <motion.div 
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 pb-10"
+          className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-6 lg:gap-8 pb-10"
         >
           <FeatureCard 
             variants={itemVariants}
@@ -150,7 +150,7 @@ const StudentDashboard = () => {
             desc="Master quantitative, verbal & logical reasoning." 
             icon={<Brain />} 
             color="bg-gradient-to-br from-orange-500 to-orange-700"
-            onClick={handleAptitudeClick} // 🔥 FIXED ROUTING HERE
+            onClick={handleAptitudeClick}
           />
 
           <FeatureCard 
@@ -192,13 +192,13 @@ const FeatureCard = ({ title, desc, icon, color, onClick, variants }) => (
   <motion.div
     variants={variants}
     whileHover={{ 
-      y: -12, 
+      y: -8, 
       scale: 1.02,
-      transition: { duration: 0.3, ease: "easeInOut" } 
+      transition: { duration: 0.25, ease: "easeInOut" } 
     }}
-    whileTap={{ scale: 0.98 }}
+    whileTap={{ scale: 0.96 }}
     onClick={onClick}
-    className="bg-white p-8 rounded-[2.5rem] border border-slate-200/50 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_60px_-20px_rgba(0,0,0,0.12)] transition-all duration-500 group cursor-pointer relative overflow-hidden"
+    className="bg-white p-3 sm:p-6 lg:p-8 rounded-2xl sm:rounded-[2rem] lg:rounded-[2.5rem] border border-slate-200/60 shadow-[0_4px_16px_-6px_rgba(0,0,0,0.05)] sm:shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-xl transition-all duration-300 group cursor-pointer relative overflow-hidden flex flex-col justify-between h-full"
   >
     {/* Animated Floating Glow */}
     <motion.div 
@@ -207,33 +207,46 @@ const FeatureCard = ({ title, desc, icon, color, onClick, variants }) => (
         rotate: [0, 90, 0] 
       }}
       transition={{ duration: 8, repeat: Infinity }}
-      className={`absolute -top-10 -right-10 w-40 h-40 opacity-[0.08] rounded-full blur-3xl ${color}`}
+      className={`absolute -top-10 -right-10 w-24 h-24 sm:w-40 sm:h-40 opacity-[0.08] rounded-full blur-2xl sm:blur-3xl ${color}`}
     ></motion.div>
 
-    {/* Icon Container with Hover Rotation */}
-    <div className={`w-16 h-16 ${color} rounded-[1.25rem] flex items-center justify-center text-white mb-8 shadow-xl transform group-hover:rotate-[10deg] transition-all duration-500 ease-out`}>
-      {React.cloneElement(icon, { size: 28, strokeWidth: 2.5 })}
+    <div>
+      {/* Icon Container with Hover Rotation */}
+      <div className={`w-10 h-10 sm:w-14 sm:h-14 lg:w-16 lg:h-16 ${color} rounded-xl sm:rounded-[1.25rem] flex items-center justify-center text-white mb-2 sm:mb-5 lg:mb-7 shadow-md sm:shadow-xl transform group-hover:rotate-[8deg] transition-all duration-300 ease-out`}>
+        <span className="block sm:hidden">
+          {React.cloneElement(icon, { size: 18, strokeWidth: 2.3 })}
+        </span>
+        <span className="hidden sm:block lg:hidden">
+          {React.cloneElement(icon, { size: 24, strokeWidth: 2.4 })}
+        </span>
+        <span className="hidden lg:block">
+          {React.cloneElement(icon, { size: 28, strokeWidth: 2.5 })}
+        </span>
+      </div>
+
+      <h3 className="text-xs sm:text-lg lg:text-2xl font-bold text-slate-800 mb-1 sm:mb-2 lg:mb-3 group-hover:text-teal-600 transition-colors tracking-tight leading-snug line-clamp-1 sm:line-clamp-none">
+        {title}
+      </h3>
+      
+      <p className="text-slate-500 text-[10px] sm:text-xs lg:text-[15px] leading-tight sm:leading-relaxed mb-2 sm:mb-5 lg:mb-8 font-normal sm:font-medium line-clamp-2 sm:line-clamp-none">
+        {desc}
+      </p>
     </div>
 
-    <h3 className="text-2xl font-bold text-slate-800 mb-3 group-hover:text-teal-600 transition-colors tracking-tight">
-      {title}
-    </h3>
-    
-    <p className="text-slate-500 text-[16px] leading-relaxed mb-10 font-medium">
-      {desc}
-    </p>
-
     {/* Animated Action Button */}
-    <div className="flex items-center gap-2 text-teal-600 font-extrabold text-[14px] uppercase tracking-widest transition-all">
+    <div className="flex items-center gap-1 sm:gap-2 text-teal-600 font-bold sm:font-extrabold text-[10px] sm:text-xs lg:text-[14px] uppercase tracking-wider sm:tracking-widest transition-all mt-auto pt-1">
       <span className="relative overflow-hidden group">
-        Open Tool
-        <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-teal-600 group-hover:w-full transition-all duration-300"></span>
+        <span className="sm:hidden">Open</span>
+        <span className="hidden sm:inline">Open Tool</span>
+        <span className="absolute bottom-0 left-0 w-0 h-[1.5px] sm:h-[2px] bg-teal-600 group-hover:w-full transition-all duration-300"></span>
       </span>
       <motion.div
-        animate={{ x: [0, 5, 0] }}
+        animate={{ x: [0, 3, 0] }}
         transition={{ duration: 1.5, repeat: Infinity }}
       >
-        <ChevronRight size={20} />
+        <ChevronRight size={13} className="sm:hidden" />
+        <ChevronRight size={18} className="hidden sm:block lg:hidden" />
+        <ChevronRight size={20} className="hidden lg:block" />
       </motion.div>
     </div>
   </motion.div>

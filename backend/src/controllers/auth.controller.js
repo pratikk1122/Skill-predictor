@@ -154,22 +154,15 @@ exports.loginWithPassword = async (req, res) => {
 
     let requireOtp = false;
 
-    if (user.forceOtpOnNextLogin === true) {
+    // Only unverified accounts need OTP verification
+    if (user.isVerified === false) {
       requireOtp = true;
-    } 
-    else if (user.lastOtpVerifiedAt) {
-      const diffTime = Math.abs(Date.now() - user.lastOtpVerifiedAt.getTime());
-      const diffDays = diffTime / (1000 * 60 * 60 * 24);
-      if (diffDays >= OTP_VALID_DAYS) requireOtp = true;
-    } 
-    else { 
-      requireOtp = true; 
     }
 
     if (requireOtp) {
       return res.json({ 
         requireOtp: true, 
-        message: "OTP required (Security Policy)",
+        message: "Email verification required",
         user: {
           firstName: user.firstName,
           surName: user.surName,
@@ -179,11 +172,12 @@ exports.loginWithPassword = async (req, res) => {
     }
 
     user.lastLoginAt = new Date();
+    user.forceOtpOnNextLogin = false;
     await user.save();
 
     const token = jwt.sign(
       { id: user._id, email: user.email, role: user.role, sessionId: user.activeSessionId },
-      process.env.JWT_SECRET, { expiresIn: "7d" }
+      process.env.JWT_SECRET, { expiresIn: "30d" }
     );
 
     res.json({ 
@@ -211,7 +205,6 @@ exports.logout = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (user) {
-      user.forceOtpOnNextLogin = true; 
       user.activeSessionId = null; 
       await user.save();
     }

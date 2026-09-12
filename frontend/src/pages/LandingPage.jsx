@@ -96,6 +96,8 @@ const LandingPage = () => {
 
   // 🔥 Authentication Check
   const isLoggedIn = !!localStorage.getItem("token");
+  const userRole = localStorage.getItem("role");
+  const dashboardRoute = userRole === "admin" ? "/admin/dashboard" : "/student";
 
   // 🔥 Auto-scroll effect
   useEffect(() => {
@@ -226,10 +228,22 @@ const LandingPage = () => {
           </div>
 
           <div className="flex items-center gap-3 sm:gap-6">
-            <Link to="/login" className={`font-bold text-xs sm:text-sm transition-colors duration-300 hover:text-blue-greeny ${
-              isScrolled ? 'text-gray-700' : 'text-white'
-            }`}>Log in</Link>
-            <Link to="/login?mode=signup" className="bg-blue-greeny hover:bg-blue-greeny-dark text-white px-4 py-2 sm:px-8 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all shadow-md">Sign up</Link>
+            {isLoggedIn ? (
+              <Link 
+                to={dashboardRoute} 
+                className="bg-blue-greeny hover:bg-blue-greeny-dark text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all shadow-md flex items-center gap-2 active:scale-95"
+              >
+                <i className="fas fa-th-large text-xs"></i>
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link to="/login" className={`font-bold text-xs sm:text-sm transition-colors duration-300 hover:text-blue-greeny ${
+                  isScrolled ? 'text-gray-700' : 'text-white'
+                }`}>Log in</Link>
+                <Link to="/login?mode=signup" className="bg-blue-greeny hover:bg-blue-greeny-dark text-white px-4 py-2 sm:px-8 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm transition-all shadow-md">Sign up</Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -252,16 +266,27 @@ const LandingPage = () => {
             </span>
           </h1>
           
-          <button 
-            onClick={() => scrollToSection('about')} 
-            className="group relative px-8 py-4 sm:px-12 sm:py-5 bg-white/10 backdrop-blur-md border border-white/30 text-white rounded-full font-black uppercase tracking-[0.2em] sm:tracking-[0.25em] text-xs sm:text-sm overflow-hidden transition-all duration-300 hover:border-blue-greeny hover:shadow-[0_0_30px_rgba(45,212,191,0.5)] active:scale-95"
-          >
-            <div className="absolute inset-0 bg-blue-greeny translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
-            <span className="relative z-10 flex items-center gap-3 group-hover:text-white transition-colors">
-              Discover More
-              <i className="fas fa-arrow-down group-hover:translate-y-1 transition-transform"></i>
-            </span>
-          </button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+            {isLoggedIn && (
+              <Link 
+                to={dashboardRoute} 
+                className="px-7 py-3.5 sm:px-10 sm:py-4 bg-blue-greeny hover:bg-blue-greeny-dark text-white rounded-full font-black uppercase tracking-[0.2em] text-xs sm:text-sm shadow-xl shadow-blue-greeny/30 transition-all duration-300 active:scale-95 flex items-center gap-2.5"
+              >
+                Go to Dashboard
+                <i className="fas fa-arrow-right"></i>
+              </Link>
+            )}
+            <button 
+              onClick={() => scrollToSection('about')} 
+              className="group relative px-8 py-4 sm:px-12 sm:py-5 bg-white/10 backdrop-blur-md border border-white/30 text-white rounded-full font-black uppercase tracking-[0.2em] sm:tracking-[0.25em] text-xs sm:text-sm overflow-hidden transition-all duration-300 hover:border-blue-greeny hover:shadow-[0_0_30px_rgba(45,212,191,0.5)] active:scale-95"
+            >
+              <div className="absolute inset-0 bg-blue-greeny translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
+              <span className="relative z-10 flex items-center gap-3 group-hover:text-white transition-colors">
+                Discover More
+                <i className="fas fa-arrow-down group-hover:translate-y-1 transition-transform"></i>
+              </span>
+            </button>
+          </div>
         </div>
       </section>
 

@@ -1,9 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ROUTES } from "../routes/routes";
 
 const Signup = () => {
   const navigate = useNavigate();
+
+  // 🔄 If user is already logged in, redirect them directly to their dashboard
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    if (token) {
+      navigate(role === "admin" ? ROUTES.ADMIN_DASHBOARD : ROUTES.STUDENT_DASHBOARD, { replace: true });
+    }
+  }, [navigate]);
 
   const [form, setForm] = useState({
     firstName: "",
@@ -82,13 +91,19 @@ const Signup = () => {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <input
+              id="signup-firstName"
               name="firstName"
+              value={form.firstName}
+              autoComplete="given-name"
               placeholder="First Name"
               className="input"
               onChange={handleChange}
             />
             <input
+              id="signup-surName"
               name="surName"
+              value={form.surName}
+              autoComplete="family-name"
               placeholder="Surname"
               className="input"
               onChange={handleChange}
@@ -96,15 +111,20 @@ const Signup = () => {
           </div>
 
           <input
+            id="signup-mobile"
             name="mobile"
             type="tel"
+            value={form.mobile}
+            autoComplete="tel"
             placeholder="Mobile Number"
             className="input"
             onChange={handleChange}
           />
 
           <select
+            id="signup-education"
             name="education"
+            value={form.education}
             className="input"
             onChange={handleChange}
           >
@@ -115,16 +135,22 @@ const Signup = () => {
           </select>
 
           <input
+            id="signup-email"
             name="email"
             type="email"
+            value={form.email}
+            autoComplete="username email"
             placeholder="Email Address"
             className="input"
             onChange={handleChange}
           />
 
           <input
+            id="signup-password"
             name="password"
             type="password"
+            value={form.password}
+            autoComplete="new-password"
             placeholder="Password"
             className="input"
             onChange={handleChange}

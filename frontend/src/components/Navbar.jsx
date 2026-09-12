@@ -20,7 +20,7 @@ const Navbar = ({ profileImage, setProfileImage, fileInputRef, studentName, stud
   }, []);
 
   return (
-    <header className="flex justify-between md:justify-end items-center mb-6 sm:mb-10">
+    <header className="flex justify-between md:justify-end items-center mb-3 sm:mb-8">
       {/* Mobile Hamburger Menu */}
       <button
         type="button"
