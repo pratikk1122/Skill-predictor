@@ -124,7 +124,25 @@ const sendOtp = async (email, otp) => {
       console.log(`✅ OTP email successfully delivered via SSL 465 to: ${email}`);
       return { success: true, delivered: true, transport: "Port 465 SSL" };
     } catch (sslError) {
-      console.error(`❌ Both SMTP transports failed to deliver to ${email}: 587: ${port587Error.message} | 465: ${sslError.message}`);
+      console.warn(`⚠️ Direct SMTP failed (${sslError.message}), attempting Vercel HTTPS Relay...`);
+      // 3️⃣ Fallback to Vercel HTTPS Serverless Mailer (Port 443 - Never blocked on Render)
+      try {
+        const axios = require("axios");
+        const vercelRes = await axios.post("https://skill-predictor.vercel.app/api/send-otp", {
+          email,
+          otp,
+          subject: mailOptions.subject,
+          html: mailOptions.html
+        }, { timeout: 8000 });
+
+        if (vercelRes.data && vercelRes.data.success) {
+          console.log(`✅ OTP email successfully delivered via Vercel HTTPS relay to: ${email}`);
+          return { success: true, delivered: true, transport: "Vercel HTTPS Relay" };
+        }
+      } catch (vercelError) {
+        console.error(`❌ Vercel HTTPS relay failed: ${vercelError.message}`);
+      }
+
       return { 
         success: false, 
         delivered: false, 
