@@ -2,11 +2,6 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import MobileBottomNav from "../components/MobileBottomNav";
-import { 
-  FileText, UploadCloud, ArrowLeft, Download, RefreshCw, 
-  CheckCircle2, AlertTriangle, XCircle, Lightbulb, Target, 
-  Zap, ShieldCheck, Sparkles, ArrowUpRight
-} from "lucide-react";
 
 const ResumeScorer = () => {
   const [isScanning, setIsScanning] = useState(false);
@@ -15,12 +10,15 @@ const ResumeScorer = () => {
   const [error, setError] = useState("");
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [targetJob, setTargetJob] = useState("");
+  // ✅ New state to store original file buffer for annotation
   const [fileBase64, setFileBase64] = useState("");
 
+  // ✅ NEW REQUIREMENT: Download Original Resume with Redlines Attached
   const downloadAnnotatedPDF = async () => {
     if (!result || !fileBase64) return;
     setIsGeneratingPDF(true);
     try {
+      // ✅ FIX: Get token from localStorage for protected download route
       const token = localStorage.getItem("token");
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -28,13 +26,13 @@ const ResumeScorer = () => {
         `${API_URL}/resume-intelligence/download-annotated`,
         {
           redlineErrors: result.redlineErrors,
-          fileBuffer: fileBase64,
+          fileBuffer: fileBase64, // Sending original file for backend annotation
           fileName: fileName
         },
         { 
           responseType: "blob",
           headers: {
-            "Authorization": `Bearer ${token}`
+            "Authorization": `Bearer ${token}` // ✅ FIX: Added Auth Header
           }
         } 
       );
@@ -67,6 +65,7 @@ const ResumeScorer = () => {
       return;
     }
 
+    // ✅ Read file as Base64 to store original buffer for later annotation
     const reader = new FileReader();
     reader.onload = (event) => {
       setFileBase64(event.target.result.split(",")[1]);
@@ -78,6 +77,7 @@ const ResumeScorer = () => {
     setIsScanning(true);
 
     try {
+      // ✅ FIX: Get token from localStorage
       const token = localStorage.getItem("token"); 
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
       
@@ -91,7 +91,7 @@ const ResumeScorer = () => {
         {
           headers: { 
             "Content-Type": "multipart/form-data",
-            "Authorization": `Bearer ${token}`
+            "Authorization": `Bearer ${token}` // ✅ FIX: Added Auth Header so backend knows WHO uploaded it
           },
         }
       );
@@ -109,389 +109,282 @@ const ResumeScorer = () => {
     }
   };
 
-  const quickRoles = [
-    "Fullstack Developer",
-    "Frontend React Engineer",
-    "Backend Node.js SDE",
-    "Data Analyst / Scientist",
-    "TCS Digital / Infosys DSE"
-  ];
-
   return (
-    <div className="min-h-screen bg-[#fafafa] font-sans text-slate-900 selection:bg-sky-400 selection:text-slate-950 pb-28 md:pb-12 relative">
-      {/* Subtle Grid Backdrop */}
-      <div className="absolute top-0 left-0 w-full h-full bg-tech-grid opacity-60 pointer-events-none z-0"></div>
-
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 md:p-10 relative z-10">
+    <div className="min-h-screen bg-teeny-greeny font-sans text-text-dark selection:bg-blue-greeny/20 pb-28 md:pb-10">
+      <div className="max-w-7xl mx-auto p-6 md:p-10">
         
-        {/* ================= HEADER SECTION ================= */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 bg-white border-2 border-slate-900 rounded-2xl p-4 sm:p-6 shadow-[4px_4px_0px_0px_#090d16]">
+        {/* HEADER SECTION */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-500">
-                PROTOCOL 01 // NEURAL ATS PARSER v3.2
-              </span>
+            <div className="flex items-center gap-3 mb-2">
+               <div className="w-10 h-10 bg-blue-greeny rounded-xl flex items-center justify-center shadow-lg rotate-3">
+                 <i className="fas fa-graduation-cap text-white text-xl"></i>
+               </div>
+               <h2 className="text-3xl font-heading font-black text-text-dark uppercase tracking-tight">
+                 Skill<span className="text-blue-greeny">Predictor</span> Intelligence
+               </h2>
             </div>
-            <h1 className="text-xl sm:text-3xl font-black uppercase tracking-tight text-slate-900">
-              ATS Resume Intelligence
-            </h1>
-            <p className="text-slate-500 text-xs sm:text-sm font-medium mt-0.5">
-              Calibrate your CV against enterprise applicant tracking systems with instant scoring.
+            <p className="text-xs text-text-light font-bold uppercase tracking-[0.2em] ml-1">
+              Advanced ATS Score & Risk Analysis
             </p>
           </div>
           
-          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full md:w-auto">
+          <div className="flex gap-4">
+            {/* ✅ UPDATED: Download Annotated PDF Button */}
             {result && (
               <button
                 onClick={downloadAnnotatedPDF}
                 disabled={isGeneratingPDF}
-                className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-sky-400 hover:bg-sky-300 text-slate-950 border-2 border-slate-900 rounded-xl text-xs font-black uppercase tracking-wider shadow-[3px_3px_0px_0px_#090d16] active:scale-95 disabled:opacity-50 transition-all"
+                className="flex items-center gap-2 px-6 py-3 bg-text-dark text-white rounded-xl text-xs font-black hover:bg-black transition-all shadow-lg active:scale-95 disabled:opacity-50"
               >
-                <Download size={14} className={isGeneratingPDF ? "animate-bounce" : ""} />
-                <span>{isGeneratingPDF ? "Compiling PDF..." : "Export Annotated PDF"}</span>
+                <i className={`fas ${isGeneratingPDF ? "fa-spinner animate-spin" : "fa-file-signature"} text-blue-greeny`}></i>
+                {isGeneratingPDF ? "Processing PDF..." : "Download Annotated Resume"}
               </button>
             )}
 
             <Link
               to="/student"
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white border-2 border-slate-900 rounded-xl text-xs font-black uppercase tracking-wider text-slate-900 hover:bg-slate-50 shadow-[2px_2px_0px_0px_#090d16] active:scale-95 transition-all"
+              className="flex items-center gap-2 px-6 py-3 bg-white border border-blue-greeny/20 rounded-xl text-xs font-black text-blue-greeny hover:bg-blue-greeny hover:text-white transition-all shadow-sm active:scale-95"
             >
-              <ArrowLeft size={14} />
-              <span>Dashboard</span>
+              <i className="fas fa-arrow-left"></i>
+              Back to Dashboard
             </Link>
           </div>
         </div>
 
         {/* Error Notification */}
         {error && (
-          <div className="bg-rose-50 border-2 border-rose-500 text-rose-900 p-4 rounded-xl mb-6 shadow-[3px_3px_0px_0px_#e11d48] flex items-center gap-3 font-bold text-xs sm:text-sm">
-            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
-            <span>{error}</span>
+          <div className="bg-white border-l-4 border-red-500 text-red-600 p-5 rounded-r-2xl mb-8 shadow-sm">
+            <div className="flex items-center gap-3 font-bold">
+              <i className="fas fa-exclamation-circle text-lg"></i>
+              {error}
+            </div>
           </div>
         )}
 
-        {/* ================= INGESTION / UPLOAD DECK ================= */}
+        {/* Upload Box */}
         {!result && !isScanning && (
-          <div className="bg-white rounded-3xl border-2 border-slate-900 p-6 sm:p-12 md:p-16 text-center shadow-[6px_6px_0px_0px_#090d16]">
-            
-            {/* Steps indicator */}
-            <div className="flex justify-center items-center gap-2 sm:gap-4 mb-8 font-mono text-[10px] sm:text-xs font-black uppercase text-slate-400">
-              <span className="text-sky-600 bg-sky-50 px-2.5 py-1 rounded border border-sky-200">01 UPLOAD CV</span>
-              <span>→</span>
-              <span className="bg-slate-100 px-2.5 py-1 rounded border border-slate-200 text-slate-600">02 TARGET ROLE</span>
-              <span>→</span>
-              <span className="bg-slate-100 px-2.5 py-1 rounded border border-slate-200 text-slate-600">03 ATS TELEMETRY</span>
+          <div className="bg-white rounded-[2.5rem] border border-blue-greeny/10 p-12 md:p-24 text-center shadow-xl shadow-blue-greeny/5">
+            <div className="w-24 h-24 bg-teeny-greeny rounded-[2rem] flex items-center justify-center mx-auto mb-8 text-blue-greeny border border-blue-greeny/5">
+              <i className="fas fa-cloud-upload-alt text-4xl"></i>
             </div>
-
-            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-sky-50 rounded-2xl flex items-center justify-center mx-auto mb-6 text-sky-600 border-2 border-slate-900 shadow-[3px_3px_0px_0px_#0ea5e9]">
-              <UploadCloud className="w-10 h-10 sm:w-12 sm:h-12" />
-            </div>
-
-            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 mb-2 uppercase tracking-tight">
-              Ingest Document For Deep Scan
-            </h2>
-            <p className="text-slate-500 mb-8 max-w-lg mx-auto text-xs sm:text-sm font-medium">
-              Upload your PDF or DOCX file to initiate an ATS compliance breakdown, keyword reconciliation, and annotated corrections.
+            <h2 className="text-4xl font-heading font-black text-text-dark mb-4 uppercase">Analyze Your Potential</h2>
+            <p className="text-text-light mb-8 max-w-lg mx-auto font-bold leading-relaxed">
+              Upload your resume to receive a comprehensive ATS evaluation, recruiter simulation, and strategic improvement suggestions.
             </p>
 
-            {/* Target Role Specification Deck */}
-            <div className="max-w-xl mx-auto mb-8 text-left bg-slate-50 p-5 rounded-2xl border-2 border-slate-900 shadow-inner">
-              <label htmlFor="target-job-input" className="block font-mono text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-slate-700 mb-2">
-                // TARGET_ENTERPRISE_ROLE <span className="text-slate-400 font-normal">(OPTIONAL FOR KEYWORD ALIGNMENT)</span>
+            {/* 🎯 TARGET JOB ROLE / JD INPUT (OPTIONAL) */}
+            <div className="max-w-md mx-auto mb-8 text-left bg-slate-50 p-5 rounded-2xl border border-slate-200/80 shadow-inner">
+              <label htmlFor="target-job-input" className="block text-[11px] font-black uppercase tracking-wider text-slate-600 mb-2">
+                🎯 Target Company / Role <span className="text-slate-400 font-normal">(Optional for ATS Match)</span>
               </label>
               <input
                 id="target-job-input"
                 type="text"
                 value={targetJob}
                 onChange={(e) => setTargetJob(e.target.value)}
-                placeholder="e.g. Google SDE 1, Amazon Fullstack Intern, TCS Digital Developer"
-                className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl text-xs font-bold text-slate-900 placeholder-slate-400 focus:outline-none focus:border-sky-500 transition-all shadow-sm"
+                placeholder="e.g. Infosys Java Developer, TCS Digital SDE, React Intern"
+                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-greeny/30 focus:border-blue-greeny transition-all"
               />
-              
-              <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                <span className="font-mono text-[9px] font-black text-slate-400 uppercase mr-1">Suggested:</span>
-                {quickRoles.map((role, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setTargetJob(role)}
-                    className="font-mono text-[9px] font-bold bg-white text-slate-700 border border-slate-300 px-2 py-0.5 rounded hover:border-sky-500 hover:text-sky-600 transition-colors"
-                  >
-                    {role}
-                  </button>
-                ))}
-              </div>
+              <p className="text-[10px] text-slate-400 mt-2 font-medium">
+                Tip: Enter your dream job role to get customized keyword matching recommendations.
+              </p>
             </div>
 
             <input type="file" id="resume-upload" className="hidden" onChange={handleFileUpload} accept=".pdf,.docx" />
             <label
               htmlFor="resume-upload"
-              className="inline-flex items-center gap-3 px-8 sm:px-12 py-4 sm:py-5 bg-sky-400 hover:bg-sky-300 text-slate-950 font-black uppercase tracking-widest text-xs sm:text-sm rounded-xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#090d16] hover:shadow-[6px_6px_0px_0px_#0ea5e9] cursor-pointer transition-all active:scale-95"
+              className="bg-blue-greeny hover:bg-blue-greeny-dark text-white px-14 py-5 rounded-2xl font-black uppercase tracking-widest cursor-pointer transition-all shadow-lg shadow-blue-greeny/20 inline-flex items-center gap-4 hover:scale-105 active:scale-95"
             >
-              <FileText size={18} />
-              <span>Select Resume File</span>
+              <i className="fas fa-file-pdf"></i> Select Document
             </label>
-
-            <div className="mt-8 flex justify-center items-center gap-4 sm:gap-6 font-mono text-[10px] font-black text-slate-400 uppercase tracking-widest">
-              <span>✓ PDF FORMAT</span>
-              <span>•</span>
-              <span>✓ DOCX FORMAT</span>
-              <span>•</span>
-              <span>✓ OCR VERIFIED</span>
+            <div className="mt-10 flex justify-center gap-8 text-[10px] font-black text-text-light uppercase tracking-[0.3em]">
+              <span>PDF Ready</span> • <span>DOCX Ready</span>
             </div>
           </div>
         )}
 
-        {/* ================= SCANNING / TELEMETRY RUNNING ================= */}
+        {/* Loading State */}
         {isScanning && (
-          <div className="bg-white rounded-3xl p-16 sm:p-24 text-center border-2 border-slate-900 shadow-[6px_6px_0px_0px_#090d16]">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-sky-400 rounded-2xl border-2 border-slate-900 shadow-[3px_3px_0px_0px_#090d16] flex items-center justify-center mx-auto mb-8 animate-spin">
-              <Zap className="text-slate-950 fill-current w-8 h-8" />
+          <div className="bg-white rounded-[3rem] p-24 text-center shadow-xl border border-blue-greeny/10">
+            <div className="flex justify-center mb-10">
+              <div className="w-24 h-24 border-[10px] border-teeny-greeny border-t-blue-greeny rounded-full animate-spin"></div>
             </div>
-            <span className="font-mono text-xs font-black text-sky-600 uppercase tracking-widest block mb-2">
-              // TELEMETRY RUNNING
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 mb-2 uppercase tracking-tight">
-              Executing Neural ATS Cross-Reference...
-            </h2>
-            <p className="text-slate-500 font-mono text-xs uppercase tracking-wider">
-              Target: {fileName} • Cross-referencing industry keyword matrices
-            </p>
+            <h2 className="text-3xl font-heading font-black text-text-dark mb-4 uppercase tracking-tight">AI Engine Running...</h2>
+            <p className="text-blue-greeny font-black tracking-[0.2em] uppercase text-xs">Cross-referencing industry standards</p>
           </div>
         )}
 
-        {/* ================= RESULTS TELEMETRY DASHBOARD ================= */}
+        {/* Results Sections */}
         {result && !isScanning && (
-          <div className="space-y-8 animate-in fade-in duration-300">
+          <div className="space-y-10 animate-fadeIn">
             
-            {/* Top Grid: ATS Score & Skill Breakdown */}
-            <div className="grid lg:grid-cols-3 gap-6">
-              
-              {/* Score Gauge Card */}
-              <div className="lg:col-span-1 bg-slate-950 rounded-2xl p-8 text-white border-2 border-slate-900 shadow-[6px_6px_0px_0px_#0ea5e9] flex flex-col items-center justify-center text-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-tech-grid-dark opacity-30 pointer-events-none"></div>
-                <span className="font-mono text-xs font-black text-sky-400 uppercase tracking-widest mb-6">
-                  // ATS COMPLIANCE RATING
-                </span>
-                
-                <div className="text-7xl sm:text-8xl font-black mb-4 tracking-tighter text-white font-sans">
-                  {result.overallScore}<span className="text-sky-400 text-4xl">%</span>
-                </div>
-
-                <div className={`px-4 py-1.5 rounded-lg font-mono font-black text-[11px] uppercase tracking-wider border-2 ${
-                  result.overallScore >= 75 
-                    ? "border-emerald-400 bg-emerald-950 text-emerald-300" 
-                    : "border-amber-400 bg-amber-950 text-amber-300"
-                }`}>
-                  {result.overallScore >= 75 ? "HIGH RECRUITER READINESS" : "OPTIMIZATION REQUIRED"}
-                </div>
-                
-                <p className="text-slate-400 text-xs mt-6 font-medium">
-                  {fileName ? `File: ${fileName}` : "Target Profile Loaded"}
-                </p>
-              </div>
-
-              {/* Skill Analytics Breakdown */}
-              <div className="lg:col-span-2 bg-white rounded-2xl p-6 sm:p-8 border-2 border-slate-900 shadow-[4px_4px_0px_0px_#090d16]">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="font-mono text-xs font-black uppercase tracking-widest text-slate-700 flex items-center gap-2">
-                    <Target size={16} className="text-sky-600" />
-                    <span>// SKILL & FORMAT TELEMETRY</span>
-                  </h3>
-                  <span className="text-[10px] font-mono text-slate-400 font-bold uppercase">4 KEY VECTORS</span>
-                </div>
-                
-                <div className="grid gap-5">
-                  {result.breakdown && Object.entries(result.breakdown).map(([key, value]) => (
-                    <div key={key}>
-                      <div className="flex justify-between items-center mb-1.5">
-                        <span className="font-black text-xs uppercase tracking-tight text-slate-800">
-                          {key.replace(/([A-Z])/g, ' $1')}
-                        </span>
-                        <span className="font-mono font-black text-sky-600 text-xs">{value}%</span>
-                      </div>
-                      <div className="h-3.5 bg-slate-100 rounded-lg p-0.5 border border-slate-300">
-                        <div 
-                          className="h-full bg-slate-900 rounded-md transition-all duration-700" 
-                          style={{ width: `${value}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Redlines Grammar & Spelling Corrections */}
+            {/* Redline Highlights Section */}
             {result.redlineErrors && result.redlineErrors.length > 0 && (
-              <div className="bg-white p-6 sm:p-8 rounded-2xl border-2 border-rose-500 shadow-[4px_4px_0px_0px_#f43f5e]">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="font-mono text-xs font-black text-rose-600 uppercase tracking-widest flex items-center gap-2">
-                    <XCircle size={16} />
-                    <span>// DETECTED GRAMMAR & SYNTAX REDLINES ({result.redlineErrors.length})</span>
-                  </h3>
-                  <span className="font-mono text-[10px] bg-rose-50 text-rose-700 px-2 py-0.5 rounded border border-rose-200">
-                    CORRECTIONS ATTACHED
-                  </span>
-                </div>
-
-                <div className="grid gap-3">
-                  {result.redlineErrors.map((err, idx) => (
-                    <div key={idx} className="p-4 bg-rose-50/50 rounded-xl border border-rose-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                      <div>
-                        <p className="text-xs font-bold text-slate-800">
-                          Original: <span className="text-rose-600 underline decoration-wavy decoration-rose-400 font-black">{err.original}</span>
-                        </p>
-                        <p className="text-xs font-black text-emerald-700 mt-1">
-                          Correction: {err.correction}
-                        </p>
+              <div className="bg-white p-10 rounded-[3rem] shadow-xl border-2 border-red-500/20">
+                <h3 className="text-xs font-black mb-8 text-red-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                  <i className="fas fa-marker"></i> Spelling & Grammar Redlines
+                </h3>
+                <div className="grid gap-4">
+                  {result.redlineErrors.map((error, idx) => (
+                    <div key={idx} className="p-6 bg-red-50 rounded-2xl border border-red-100 group relative">
+                      <p className="text-sm font-bold text-text-dark mb-2">
+                        Detected: <span className="text-red-600 underline decoration-wavy decoration-red-400 font-black">{error.original}</span>
+                      </p>
+                      <p className="text-xs font-black text-blue-greeny uppercase tracking-widest">
+                        Correction: {error.correction}
+                      </p>
+                      <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <span className="text-[10px] bg-red-500 text-white px-3 py-1 rounded-full font-black uppercase">{error.type}</span>
                       </div>
-                      <span className="font-mono text-[9px] bg-rose-500 text-white px-2.5 py-1 rounded font-black uppercase">
-                        {err.type || "ERROR"}
-                      </span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Middle Grid: Recruiter Impression & Risk Factors */}
-            <div className="grid md:grid-cols-2 gap-6">
-              
-              {/* Recruiter Impression */}
-              <div className="bg-white p-6 sm:p-8 rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#090d16]">
-                <h3 className="font-mono text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-2 mb-6">
-                  <Sparkles size={16} className="text-sky-600" />
-                  <span>// RECRUITER 6-SECOND SIMULATION</span>
-                </h3>
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="text-5xl font-black text-slate-900">
-                    {result.recruiterSimulation?.firstImpressionScore}
-                    <span className="text-xl text-slate-400">/10</span>
-                  </div>
-                  <div className="font-mono text-[10px] font-black uppercase text-slate-500 tracking-wider">
-                    Recruiter Eye-Tracking Rating
-                  </div>
+            {/* Score & Breakdown Card */}
+            <div className="grid lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-1 bg-text-dark rounded-[3rem] p-12 text-white shadow-2xl flex flex-col items-center justify-center text-center">
+                <span className="text-blue-greeny font-black uppercase tracking-widest text-[10px] mb-8">ATS Performance</span>
+                <div className="text-8xl font-heading font-black mb-4">
+                  {result.overallScore}<span className="text-blue-greeny text-4xl">%</span>
                 </div>
-                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-slate-700 font-medium text-xs sm:text-sm leading-relaxed">
+                <div className={`px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest border-2 ${result.overallScore >= 75 ? "border-blue-greeny text-blue-greeny" : "border-orange-500 text-orange-500"}`}>
+                  {result.overallScore >= 75 ? "Strong Candidate" : "Needs Optimization"}
+                </div>
+              </div>
+
+              <div className="lg:col-span-2 bg-white rounded-[3rem] p-12 border border-blue-greeny/10 shadow-sm">
+                <h3 className="text-xl font-heading font-black mb-10 text-text-dark uppercase tracking-widest flex items-center gap-3">
+                  <i className="fas fa-tasks text-blue-greeny"></i> Skill Analytics
+                </h3>
+                <div className="grid gap-8">
+                  {result.breakdown && Object.entries(result.breakdown).map(([key, value]) => (
+                    <div key={key}>
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="font-black text-[10px] uppercase tracking-widest text-text-light">{key.replace(/([A-Z])/g, ' $1')}</span>
+                        <span className="font-black text-blue-greeny text-sm">{value}%</span>
+                      </div>
+                      <div className="h-4 bg-teeny-greeny rounded-full p-1 shadow-inner border border-blue-greeny/5">
+                        <div className="h-full bg-blue-greeny rounded-full transition-all duration-1000" style={{ width: `${value}%` }}></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Middle Grid */}
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="bg-white p-10 rounded-[3rem] shadow-xl border border-blue-greeny/5">
+                <h3 className="text-xs font-black mb-8 flex items-center gap-3 text-text-dark uppercase tracking-[0.2em]">
+                  <i className="fas fa-id-badge text-blue-greeny text-lg"></i> Recruiter Impression
+                </h3>
+                <div className="flex items-center gap-5 mb-8">
+                  <div className="text-6xl font-heading font-black text-blue-greeny">{result.recruiterSimulation?.firstImpressionScore}</div>
+                  <div className="text-text-light font-bold uppercase text-[10px] tracking-widest leading-tight">Impact<br/>Rating / 10</div>
+                </div>
+                <div className="p-8 bg-teeny-greeny rounded-[2rem] border border-blue-greeny/5 text-text-dark font-bold leading-relaxed">
                   {result.recruiterSimulation?.recruiterAttentionSummary}
                 </div>
               </div>
 
-              {/* Risk Factors */}
-              <div className="bg-white p-6 sm:p-8 rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#090d16]">
-                <h3 className="font-mono text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-2 mb-6">
-                  <AlertTriangle size={16} className="text-amber-500" />
-                  <span>// DETECTED RISK VECTORS</span>
+              <div className="bg-white p-10 rounded-[3rem] border border-blue-greeny/10 shadow-sm">
+                <h3 className="text-xs font-black mb-8 flex items-center gap-3 text-text-dark uppercase tracking-[0.2em]">
+                  <i className="fas fa-exclamation-triangle text-orange-500 text-lg"></i> Risk Factors
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-6">
                   {result.riskAnalysis && Object.entries(result.riskAnalysis).map(([key, value]) => (
-                    <div key={key} className="bg-amber-50/60 p-3.5 rounded-xl border border-amber-200">
-                      <span className="font-mono text-[9px] font-black uppercase text-amber-800 tracking-wider block mb-0.5">
-                        {key}
-                      </span>
-                      <p className="text-slate-800 text-xs font-bold">{value}</p>
+                    <div key={key} className="bg-teeny-greeny/50 p-4 rounded-2xl border border-blue-greeny/5">
+                      <span className="text-[9px] font-black uppercase text-blue-greeny tracking-widest block mb-1">{key}</span>
+                      <p className="text-text-dark text-sm font-bold">{value}</p>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Critical Mistakes & Strategic Suggestions */}
-            <div className="grid md:grid-cols-2 gap-6">
-              
-              {/* Critical Mistakes */}
-              <div className="bg-white p-6 sm:p-8 rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#090d16]">
-                <h3 className="font-mono text-xs font-black text-rose-600 uppercase tracking-widest flex items-center gap-2 mb-6">
-                  <XCircle size={16} />
-                  <span>// CRITICAL OMISSIONS</span>
-                </h3>
-                <div className="space-y-3">
-                  {result.mistakes?.map((item, i) => (
-                    <div key={i} className="flex gap-3 items-start p-3.5 bg-slate-50 rounded-xl text-slate-800 text-xs font-bold border border-slate-200">
-                      <span className="font-mono text-rose-500 font-black mt-0.5">0{i + 1}</span>
-                      <p className="leading-snug">{item}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {/* Detailed Lists */}
+            <div className="grid md:grid-cols-2 gap-8">
+               <div className="bg-white p-10 rounded-[3rem] shadow-xl border-t-8 border-red-500">
+                  <h3 className="text-xs font-black mb-8 text-text-dark uppercase tracking-[0.2em] flex items-center gap-2">
+                    <i className="fas fa-times-circle text-red-500"></i> Critical Mistakes
+                  </h3>
+                  <div className="space-y-4">
+                    {result.mistakes?.map((item, i) => (
+                      <div key={i} className="flex gap-4 items-center p-5 bg-slate-50 rounded-2xl text-text-dark text-sm font-bold border border-slate-100">
+                        <div className="w-2 h-2 bg-red-400 rounded-full flex-shrink-0"></div>
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+               </div>
 
-              {/* Strategic Suggestions */}
-              <div className="bg-white p-6 sm:p-8 rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#090d16]">
-                <h3 className="font-mono text-xs font-black text-sky-600 uppercase tracking-widest flex items-center gap-2 mb-6">
-                  <Lightbulb size={16} />
-                  <span>// STRATEGIC REFINEMENTS</span>
-                </h3>
-                <div className="space-y-3">
-                  {result.suggestions?.map((item, i) => (
-                    <div key={i} className="flex gap-3 items-start p-3.5 bg-sky-50/50 rounded-xl text-slate-800 text-xs font-bold border border-sky-200">
-                      <span className="font-mono text-sky-600 font-black mt-0.5">0{i + 1}</span>
-                      <p className="leading-snug">{item}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
+               <div className="bg-white p-10 rounded-[3rem] shadow-xl border-t-8 border-blue-greeny">
+                  <h3 className="text-xs font-black mb-8 text-text-dark uppercase tracking-[0.2em] flex items-center gap-2">
+                    <i className="fas fa-lightbulb text-blue-greeny"></i> Strategic Suggestions
+                  </h3>
+                  <div className="space-y-4">
+                    {result.suggestions?.map((item, i) => (
+                      <div key={i} className="flex gap-4 items-center p-5 bg-teeny-greeny rounded-2xl text-text-dark text-sm font-bold border border-blue-greeny/10">
+                        <div className="w-2 h-2 bg-blue-greeny rounded-full flex-shrink-0"></div>
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+               </div>
             </div>
 
-            {/* ATS Target Role Keyword Matching Section */}
+            {/* 🎯 ATS Target Role Keyword Matching Section */}
             {result.missingKeywords && result.missingKeywords.length > 0 && (
-              <div className="bg-white p-6 sm:p-8 rounded-2xl border-2 border-slate-900 shadow-[4px_4px_0px_0px_#090d16]">
+              <div className="bg-white p-8 sm:p-10 rounded-[2.5rem] shadow-xl border-2 border-teal-500/20">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                   <div>
-                    <h3 className="font-mono text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                      <Target size={16} className="text-sky-600" />
-                      <span>// HIGH-PRIORITY ATS KEYWORDS TO INSERT</span>
+                    <h3 className="text-sm font-black text-teal-800 uppercase tracking-wider flex items-center gap-2">
+                      <i className="fas fa-bullseye text-teal-600"></i> High-Priority ATS Keywords To Add
                     </h3>
-                    <p className="text-xs text-slate-500 mt-1 font-medium">
-                      Integrate these missing industry-standard skills into your experience bullets to maximize ATS parsing scores.
+                    <p className="text-xs text-slate-500 mt-1">
+                      Include these industry-standard skills in your projects or summary to significantly improve your recruiter screening score.
                     </p>
                   </div>
-                  <span className="self-start sm:self-auto font-mono text-[10px] font-black uppercase tracking-wider bg-slate-900 text-white px-3 py-1 rounded-lg">
-                    {result.missingKeywords.length} MISSING
+                  <span className="self-start sm:self-auto text-[10px] font-black uppercase tracking-widest bg-teal-50 text-teal-700 px-3 py-1.5 rounded-xl border border-teal-200">
+                    {result.missingKeywords.length} Keywords Missing
                   </span>
                 </div>
-                
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2.5">
                   {result.missingKeywords.map((keyword, i) => (
                     <span 
                       key={i} 
-                      className="px-3 py-1.5 bg-slate-50 text-slate-800 font-mono font-bold text-xs rounded-lg border-2 border-slate-300 inline-flex items-center gap-1.5"
+                      className="px-3.5 py-1.5 bg-slate-50 hover:bg-teal-50 text-slate-700 hover:text-teal-800 font-bold text-xs rounded-xl border border-slate-200 transition-colors inline-flex items-center gap-1.5"
                     >
-                      <span className="text-sky-600">+</span> {keyword}
+                      <i className="fas fa-plus text-[9px] text-teal-600"></i> {keyword}
                     </span>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Bottom Actions Deck */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 pb-12">
+            {/* Bottom Reset Button */}
+            <div className="flex flex-col items-center pt-16 pb-20">
               <button
                 onClick={() => { setResult(null); setFileName(""); setError(""); setFileBase64(""); }}
-                className="w-full sm:w-auto flex items-center justify-center gap-3 bg-slate-900 hover:bg-slate-800 text-white px-8 py-4 rounded-xl font-black uppercase tracking-widest text-xs border-2 border-slate-900 shadow-[4px_4px_0px_0px_#0ea5e9] transition-all active:scale-95"
+                className="group flex items-center gap-4 bg-text-dark text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-2xl"
               >
-                <RefreshCw size={16} />
-                <span>Scan Another Document</span>
+                <i className="fas fa-sync-alt group-hover:rotate-180 transition-transform duration-500 text-blue-greeny"></i>
+                Analyze Another Resume
               </button>
-
-              {fileBase64 && (
-                <button
-                  onClick={downloadAnnotatedPDF}
-                  disabled={isGeneratingPDF}
-                  className="w-full sm:w-auto flex items-center justify-center gap-3 bg-sky-400 hover:bg-sky-300 text-slate-950 px-8 py-4 rounded-xl font-black uppercase tracking-widest text-xs border-2 border-slate-900 shadow-[4px_4px_0px_0px_#090d16] transition-all active:scale-95 disabled:opacity-50"
-                >
-                  <Download size={16} />
-                  <span>{isGeneratingPDF ? "Compiling PDF..." : "Export Annotated Resume"}</span>
-                </button>
-              )}
+              <div className="mt-8 flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-greeny rounded-full animate-pulse"></div>
+                <p className="text-text-light text-[10px] font-black uppercase tracking-[0.4em]">Intelligence Powered by SkillPredictor</p>
+              </div>
             </div>
 
           </div>
         )}
       </div>
 
-      {/* Mobile Bottom Navigation */}
+      {/* 📱 Mobile Bottom Navigation Bar */}
       <MobileBottomNav />
     </div>
   );

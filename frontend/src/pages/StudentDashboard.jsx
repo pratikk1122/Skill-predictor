@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Video, Brain, PieChart, Users, Building2, ArrowUpRight, Zap, ShieldCheck } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { FileText, Video, Brain, PieChart, Users, Building2, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion'; // ✨ Animations upgrade
 import api from "../services/api";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
@@ -19,7 +19,7 @@ const StudentDashboard = () => {
     const storedEmail = localStorage.getItem("userEmail");
     
     setStudentInfo({
-      name: storedName || "Student Candidate",
+      name: storedName || "Student User",
       email: storedEmail || "student@skillpredictor.com"
     });
   }, []);
@@ -54,31 +54,32 @@ const StudentDashboard = () => {
   const handleGDClick = () => navigate("/student/group-discussion");
   const handleAnalyticsClick = () => navigate("/student/analytics");
 
-  // Animation variants
+  // ✨ Animation Configurations
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: { 
-        staggerChildren: 0.08,
-        delayChildren: 0.1
+        staggerChildren: 0.15,
+        delayChildren: 0.2
       }
     }
   };
 
   const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
+    hidden: { y: 30, opacity: 0 },
     visible: { 
       y: 0, 
       opacity: 1,
-      transition: { duration: 0.3, ease: "easeOut" }
+      transition: { type: "spring", stiffness: 100 }
     }
   };
 
   return (
-    <div className="flex h-screen bg-[#fafafa] font-sans text-slate-900 overflow-hidden relative selection:bg-sky-400 selection:text-slate-950">
-      {/* Background Tech Grid */}
-      <div className="absolute top-0 left-0 w-full h-full bg-tech-grid opacity-60 pointer-events-none z-0"></div>
+    <div className="flex h-screen bg-[#f8fafc] font-sans text-slate-900 overflow-hidden relative">
+      {/* Dynamic Background Pattern */}
+      <div className="absolute top-0 left-0 w-full h-full opacity-[0.04] pointer-events-none z-0" 
+           style={{ backgroundImage: `radial-gradient(#0d9488 1.5px, transparent 1.5px)`, backgroundSize: '40px 40px' }}></div>
 
       <input type="file" ref={fileInputRef} onChange={handleImageChange} className="hidden" accept="image/*" />
       
@@ -88,7 +89,7 @@ const StudentDashboard = () => {
         onClose={() => setIsSidebarOpen(false)} 
       />
 
-      <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-10 pb-28 md:pb-12 relative z-10 scroll-smooth">
+      <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-12 pb-28 md:pb-12 relative z-10 scroll-smooth">
         <Navbar 
           profileImage={profileImage} 
           setProfileImage={setProfileImage}
@@ -98,167 +99,155 @@ const StudentDashboard = () => {
           onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
         />
 
-        {/* Command Center Telemetry Banner */}
-        <div className="mb-4 sm:mb-8 mt-1 sm:mt-3 bg-white border-2 border-slate-900 rounded-2xl p-4 sm:p-6 shadow-[4px_4px_0px_0px_#090d16] flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-500">
-                TELEMETRY // CANDIDATE COMMAND DECK
-              </span>
-            </div>
-            <h1 className="text-lg sm:text-2xl lg:text-3xl font-black text-slate-900 uppercase tracking-tight">
-              Welcome, <span className="text-sky-600 capitalize">{studentInfo.name}</span>
-            </h1>
-            <p className="text-slate-500 text-xs sm:text-sm font-medium mt-0.5">
-              Select a placement protocol module below to calibrate your skills.
-            </p>
-          </div>
+        {/* Welcome Section with Reveal Animation */}
+        <motion.div 
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="mb-4 sm:mb-8 lg:mb-12 mt-1 sm:mt-4 lg:mt-6"
+        >
+          <h1 className="text-xl sm:text-3xl lg:text-4xl font-black text-slate-800 tracking-tight leading-tight">
+            Welcome back, <span className="text-teal-600 capitalize">{studentInfo.name}</span>! 👋
+          </h1>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="text-slate-500 mt-1 sm:mt-2 text-xs sm:text-base lg:text-lg font-medium"
+          >
+            Your path to professional excellence starts here.
+          </motion.p>
+        </motion.div>
 
-          {/* Quick System Badges */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 border border-sky-200 rounded-lg text-sky-700 font-mono text-[10px] sm:text-xs font-bold">
-              <Zap className="w-3.5 h-3.5 text-sky-600 fill-current" />
-              <span>ENGINES: 6 READY</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 font-mono text-[10px] sm:text-xs font-bold">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>SESSION: SECURED</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Dynamic Responsive Grid: 2 Columns Mobile, 3 Columns Laptop */}
+        {/* Animated Grid System: 2 Columns on Mobile, 3 on Desktop */}
         <motion.div 
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-5 lg:gap-6 pb-6"
+          className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-6 lg:gap-8 pb-10"
         >
           <FeatureCard 
             variants={itemVariants}
-            index="01"
-            tag="AI ENGINE"
             title="Resume Scorer" 
-            desc="Neural ATS parser, keyword gap analysis & annotated redline PDF download." 
+            desc="AI-powered ATS score & detailed analysis feedback." 
             icon={<FileText />} 
-            badgeColor="bg-sky-500 text-slate-950"
+            color="bg-gradient-to-br from-blue-500 to-blue-700"
             onClick={handleResumeScorerClick}
           />
 
           <FeatureCard 
             variants={itemVariants}
-            index="02"
-            tag="VOICE STUDIO"
             title="AI Mock Interview" 
-            desc="Adaptive speech-to-text dialogue simulations with instant real-time telemetry." 
+            desc="Real-time technical & HR practice with AI feedback." 
             icon={<Video />} 
-            badgeColor="bg-purple-500 text-white"
+            color="bg-gradient-to-br from-purple-500 to-purple-700"
             onClick={handleAIInterviewClick}
           />
           
           <FeatureCard 
             variants={itemVariants}
-            index="03"
-            tag="COGNITIVE MATRIX"
             title="Aptitude Test" 
-            desc="Master quantitative arithmetic, verbal logic, and percentile benchmarks." 
+            desc="Master quantitative, verbal & logical reasoning." 
             icon={<Brain />} 
-            badgeColor="bg-amber-500 text-slate-950"
+            color="bg-gradient-to-br from-orange-500 to-orange-700"
             onClick={handleAptitudeClick}
           />
 
           <FeatureCard 
             variants={itemVariants}
-            index="04"
-            tag="TELEMETRY"
             title="Analytics" 
-            desc="Deep performance visualization, competency radar, and progress curves." 
+            desc="Visualise your performance and growth charts." 
             icon={<PieChart />} 
-            badgeColor="bg-emerald-500 text-slate-950"
+            color="bg-gradient-to-br from-teal-500 to-teal-700"
             onClick={handleAnalyticsClick}
           />
 
           <FeatureCard 
             variants={itemVariants}
-            index="05"
-            tag="MULTI-AGENT"
             title="Group Discussion" 
-            desc="AI-moderated roundtable communication chambers for vocal articulation." 
+            desc="AI-moderated communication rooms for practice." 
             icon={<Users />} 
-            badgeColor="bg-rose-500 text-white" 
+            color="bg-gradient-to-br from-pink-500 to-pink-700" 
             onClick={handleGDClick}
           />
 
           <FeatureCard 
             variants={itemVariants}
-            index="06"
-            tag="ENTERPRISE VAULT"
             title="Company Prep" 
-            desc="Targeted recruitment archives for Google, Amazon, Microsoft, TCS, and Infosys." 
+            desc="Specific preparation modules for Tech Giants." 
             icon={<Building2 />} 
-            badgeColor="bg-indigo-500 text-white" 
+            color="bg-gradient-to-br from-indigo-500 to-indigo-700" 
             onClick={handleCompanyPrepClick}
           />
         </motion.div>
       </main>
 
-      {/* Mobile App Bottom Navigation Bar */}
+      {/* 📱 Mobile App Bottom Navigation Bar */}
       <MobileBottomNav />
     </div>
   );
 };
 
-const FeatureCard = ({ index, tag, title, desc, icon, badgeColor, onClick, variants }) => (
+const FeatureCard = ({ title, desc, icon, color, onClick, variants }) => (
   <motion.div
     variants={variants}
     whileHover={{ 
-      y: -4, 
-      transition: { duration: 0.18, ease: "easeOut" } 
+      y: -8, 
+      scale: 1.02,
+      transition: { duration: 0.25, ease: "easeInOut" } 
     }}
-    whileTap={{ scale: 0.97 }}
+    whileTap={{ scale: 0.96 }}
     onClick={onClick}
-    className="bg-white p-3 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl border-2 border-slate-900 shadow-[3px_3px_0px_0px_#090d16] sm:shadow-[4px_4px_0px_0px_#090d16] hover:shadow-[6px_6px_0px_0px_#0ea5e9] hover:border-sky-500 transition-all duration-200 group cursor-pointer relative overflow-hidden flex flex-col justify-between h-full"
+    className="bg-white p-3 sm:p-6 lg:p-8 rounded-2xl sm:rounded-[2rem] lg:rounded-[2.5rem] border border-slate-200/60 shadow-[0_4px_16px_-6px_rgba(0,0,0,0.05)] sm:shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-xl transition-all duration-300 group cursor-pointer relative overflow-hidden flex flex-col justify-between h-full"
   >
+    {/* Animated Floating Glow */}
+    <motion.div 
+      animate={{ 
+        scale: [1, 1.2, 1],
+        rotate: [0, 90, 0] 
+      }}
+      transition={{ duration: 8, repeat: Infinity }}
+      className={`absolute -top-10 -right-10 w-24 h-24 sm:w-40 sm:h-40 opacity-[0.08] rounded-full blur-2xl sm:blur-3xl ${color}`}
+    ></motion.div>
+
     <div>
-      {/* Top Protocol Index & Category */}
-      <div className="flex items-center justify-between mb-2 sm:mb-4">
-        <span className="font-mono text-[10px] sm:text-xs font-black text-sky-600 bg-sky-50 border border-sky-200 px-1.5 py-0.5 rounded">
-          #{index}
-        </span>
-        <span className="font-mono text-[8px] sm:text-[10px] font-black uppercase tracking-wider text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
-          {tag}
-        </span>
-      </div>
-
-      {/* Compact Icon */}
-      <div className={`w-8 h-8 sm:w-11 sm:h-11 lg:w-12 lg:h-12 ${badgeColor} rounded-lg sm:rounded-xl flex items-center justify-center border-2 border-slate-900 mb-2 sm:mb-3.5 shadow-sm transform group-hover:rotate-6 transition-transform`}>
+      {/* Icon Container with Hover Rotation */}
+      <div className={`w-10 h-10 sm:w-14 sm:h-14 lg:w-16 lg:h-16 ${color} rounded-xl sm:rounded-[1.25rem] flex items-center justify-center text-white mb-2 sm:mb-5 lg:mb-7 shadow-md sm:shadow-xl transform group-hover:rotate-[8deg] transition-all duration-300 ease-out`}>
         <span className="block sm:hidden">
-          {React.cloneElement(icon, { size: 16, strokeWidth: 2.3 })}
+          {React.cloneElement(icon, { size: 18, strokeWidth: 2.3 })}
         </span>
-        <span className="hidden sm:block">
-          {React.cloneElement(icon, { size: 22, strokeWidth: 2.4 })}
+        <span className="hidden sm:block lg:hidden">
+          {React.cloneElement(icon, { size: 24, strokeWidth: 2.4 })}
+        </span>
+        <span className="hidden lg:block">
+          {React.cloneElement(icon, { size: 28, strokeWidth: 2.5 })}
         </span>
       </div>
 
-      {/* Title */}
-      <h3 className="text-xs sm:text-base lg:text-lg font-black text-slate-900 mb-1 sm:mb-1.5 group-hover:text-sky-600 transition-colors uppercase tracking-tight line-clamp-1">
+      <h3 className="text-xs sm:text-lg lg:text-2xl font-bold text-slate-800 mb-1 sm:mb-2 lg:mb-3 group-hover:text-teal-600 transition-colors tracking-tight leading-snug line-clamp-1 sm:line-clamp-none">
         {title}
       </h3>
       
-      {/* Description */}
-      <p className="text-slate-500 text-[9px] sm:text-xs leading-tight sm:leading-relaxed mb-2 sm:mb-4 font-medium line-clamp-2">
+      <p className="text-slate-500 text-[10px] sm:text-xs lg:text-[15px] leading-tight sm:leading-relaxed mb-2 sm:mb-5 lg:mb-8 font-normal sm:font-medium line-clamp-2 sm:line-clamp-none">
         {desc}
       </p>
     </div>
 
-    {/* Bottom Action Prompt */}
-    <div className="flex items-center justify-between pt-2 border-t border-slate-100 mt-auto">
-      <span className="font-mono text-[9px] sm:text-[11px] font-black uppercase tracking-wider text-slate-700 group-hover:text-sky-600 transition-colors">
-        <span className="sm:hidden">LAUNCH</span>
-        <span className="hidden sm:inline">LAUNCH PROTOCOL</span>
+    {/* Animated Action Button */}
+    <div className="flex items-center gap-1 sm:gap-2 text-teal-600 font-bold sm:font-extrabold text-[10px] sm:text-xs lg:text-[14px] uppercase tracking-wider sm:tracking-widest transition-all mt-auto pt-1">
+      <span className="relative overflow-hidden group">
+        <span className="sm:hidden">Open</span>
+        <span className="hidden sm:inline">Open Tool</span>
+        <span className="absolute bottom-0 left-0 w-0 h-[1.5px] sm:h-[2px] bg-teal-600 group-hover:w-full transition-all duration-300"></span>
       </span>
-      <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 group-hover:text-sky-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+      <motion.div
+        animate={{ x: [0, 3, 0] }}
+        transition={{ duration: 1.5, repeat: Infinity }}
+      >
+        <ChevronRight size={13} className="sm:hidden" />
+        <ChevronRight size={18} className="hidden sm:block lg:hidden" />
+        <ChevronRight size={20} className="hidden lg:block" />
+      </motion.div>
     </div>
   </motion.div>
 );
