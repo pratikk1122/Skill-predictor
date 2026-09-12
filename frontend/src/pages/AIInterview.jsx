@@ -1,8 +1,9 @@
 import React, { useState, useRef } from "react";
 import api from "../services/api";
 import { jsPDF } from "jspdf";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import MobileBottomNav from "../components/MobileBottomNav";
+import ThemeToggle from "../components/common/ThemeToggle";
 import useCooldown from "../hooks/useCooldown";
 import PrivacyBadge from "../components/common/PrivacyBadge";
 import BoundedInput from "../components/common/BoundedInput";
@@ -17,9 +18,7 @@ import {
   Award,
   CheckCircle2,
   Download,
-  Zap,
-  Share2,
-  Check
+  Zap
 } from "lucide-react";
 
 const AIInterview = () => {
@@ -27,7 +26,7 @@ const AIInterview = () => {
   const { isCoolingDown, trigger: triggerWithCooldown } = useCooldown(1500);
 
   const [file, setFile] = useState(null);
-  const [difficulty, setDifficulty] = useState("medium"); // Added for Difficulty logic
+  const [difficulty, setDifficulty] = useState("medium");
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState("");
@@ -41,6 +40,7 @@ const AIInterview = () => {
 
   /* ================= TEXT TO SPEECH ================= */
   const speakQuestion = (text) => {
+    if (!('speechSynthesis' in window)) return;
     const speech = new SpeechSynthesisUtterance(text);
     speech.lang = "en-US";
     speech.rate = 1;
@@ -53,7 +53,7 @@ const AIInterview = () => {
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      alert("Speech recognition not supported.");
+      alert("Speech recognition is not supported in this browser.");
       return;
     }
 
@@ -65,8 +65,8 @@ const AIInterview = () => {
     recognition.onstart = () => setListening(true);
 
     recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      setAnswer(transcript);
+      const transcriptText = event.results[0][0].transcript;
+      setAnswer(transcriptText);
     };
 
     recognition.onend = () => setListening(false);
@@ -84,7 +84,7 @@ const AIInterview = () => {
   /* ================= START INTERVIEW ================= */
   const handleStartInterview = async () => {
     if (!file) {
-      alert("Upload resume first.");
+      alert("Please upload your resume first.");
       return;
     }
 
@@ -93,7 +93,7 @@ const AIInterview = () => {
 
       const formData = new FormData();
       formData.append("resume", file);
-      formData.append("difficulty", difficulty); // Requirement: Sending difficulty to API
+      formData.append("difficulty", difficulty);
 
       const response = await api.post("/interview/start", formData, {
         headers: {
@@ -107,7 +107,7 @@ const AIInterview = () => {
 
       speakQuestion(response.data.question);
     } catch {
-      alert("Failed to start interview.");
+      alert("Failed to initialize interview session. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -116,7 +116,7 @@ const AIInterview = () => {
   /* ================= SUBMIT ANSWER ================= */
   const handleSubmitAnswer = async () => {
     if (!answer.trim()) {
-      alert("Provide answer.");
+      alert("Please provide an answer before submitting.");
       return;
     }
 
@@ -145,7 +145,7 @@ const AIInterview = () => {
 
       speakQuestion(response.data.nextQuestion);
     } catch {
-      alert("Error submitting answer.");
+      alert("Error submitting your response. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -157,7 +157,7 @@ const AIInterview = () => {
     let y = 10;
 
     doc.setFontSize(18);
-    doc.text("AI Interview Report", 10, y);
+    doc.text("AI Interview Performance Report", 10, y);
     y += 10;
 
     doc.setFontSize(14);
@@ -174,7 +174,7 @@ const AIInterview = () => {
 
       if (item.feedback) {
         doc.text(
-          `Scores → Technical: ${item.feedback.technical_score} | Communication: ${item.feedback.communication_score} | Confidence: ${item.feedback.confidence_score}`,
+          `Scores: Technical: ${item.feedback.technical_score} | Communication: ${item.feedback.communication_score} | Confidence: ${item.feedback.confidence_score}`,
           10,
           y
         );
@@ -183,7 +183,7 @@ const AIInterview = () => {
         if (item.feedback.improvement?.length) {
           item.feedback.improvement.forEach((imp) => {
             doc.text(
-              `Improvement (${imp.category}): ${imp.description}`,
+              `Suggestion (${imp.category}): ${imp.description}`,
               10,
               y
             );
@@ -206,77 +206,88 @@ const AIInterview = () => {
   /* ================= FINAL REPORT UI ================= */
   if (completed) {
     return (
-      <div className="min-h-screen bg-teeny-greeny p-6 md:p-10 font-sans text-text-dark">
-        <div className="max-w-5xl mx-auto bg-white shadow-2xl rounded-[2.5rem] border border-blue-greeny/5 p-8 md:p-12 animate-in zoom-in-95 duration-300">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 md:p-10 font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">
+        <div className="max-w-4xl mx-auto bg-white dark:bg-slate-900 shadow-xl rounded-3xl sm:rounded-[2rem] border border-slate-200/80 dark:border-slate-800 p-6 sm:p-10 animate-in zoom-in-95 duration-300">
           
-          <div className="flex flex-col items-center text-center mb-12">
-            <div className="w-20 h-20 bg-blue-greeny/10 text-blue-greeny rounded-3xl flex items-center justify-center mb-6 shadow-inner">
-               <Award size={40} />
-            </div>
-            <h1 className="text-4xl font-heading font-black uppercase tracking-tight mb-2">
-              Interview Achieved
-            </h1>
-            <p className="text-text-light font-bold uppercase tracking-widest text-xs">AI Performance Evaluation</p>
+          <div className="flex justify-between items-center mb-8">
+            <Link
+              to="/student"
+              className="flex items-center gap-2 h-10 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition-all active:scale-95"
+            >
+              <ArrowLeft size={14} />
+              <span>Back to Dashboard</span>
+            </Link>
+            <ThemeToggle />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-            <div className="bg-teeny-greeny/30 rounded-[2rem] p-8 text-center border border-blue-greeny/10">
-              <div className="text-7xl font-heading font-black text-blue-greeny">
+          <div className="flex flex-col items-center text-center mb-8">
+            <div className="w-16 h-16 bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+               <Award size={32} />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white tracking-tight mb-1">
+              Interview Evaluation Completed
+            </h1>
+            <p className="text-slate-400 text-xs font-medium uppercase tracking-wider">Comprehensive AI Proficiency Scoring</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
+            <div className="bg-teal-50/50 dark:bg-teal-950/30 rounded-2xl p-6 text-center border border-teal-100 dark:border-teal-900/40 flex flex-col justify-center">
+              <div className="text-6xl font-black text-teal-600 dark:text-teal-400">
                 {overallScore}%
               </div>
-              <p className="text-text-light font-black uppercase tracking-[0.2em] text-[10px] mt-4">
-                Global Proficiency Score
+              <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-3">
+                Overall Competency Rating
               </p>
             </div>
 
-            <div className="flex flex-col justify-center space-y-4">
+            <div className="flex flex-col justify-center space-y-3">
                <button
                 onClick={downloadReport}
-                className="w-full bg-blue-greeny text-white px-8 py-5 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-blue-greeny-dark transition-all shadow-lg shadow-blue-greeny/20 flex items-center justify-center gap-3"
+                className="h-11 w-full bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-semibold text-xs transition-all shadow-md shadow-teal-600/20 flex items-center justify-center gap-2 active:scale-95"
               >
-                <Download size={20} strokeWidth={3} /> Download PDF Report
+                <Download size={16} /> Download PDF Report
               </button>
               <button
-                onClick={() => navigate("/student/dashboard")}
-                className="w-full bg-text-dark text-white px-8 py-5 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-black transition-all flex items-center justify-center gap-3"
+                onClick={() => navigate("/student")}
+                className="h-11 w-full bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 text-white rounded-xl font-semibold text-xs transition-all flex items-center justify-center gap-2 active:scale-95"
               >
-                <ArrowLeft size={20} strokeWidth={3} /> Return Dashboard
+                <ArrowLeft size={16} /> Return to Dashboard
               </button>
             </div>
           </div>
 
-          <h2 className="text-2xl font-heading font-black mb-8 uppercase tracking-tight border-l-8 border-blue-greeny pl-4">
-            Detailed Analytics
+          <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white mb-6 uppercase tracking-wider border-l-4 border-teal-600 pl-3">
+            Question-by-Question Breakdown
           </h2>
 
-          <div className="space-y-8">
+          <div className="space-y-6">
             {transcript.map((item, index) => (
-              <div key={index} className="group border border-blue-greeny/5 rounded-[2rem] p-8 bg-slate-50/50 hover:bg-white hover:shadow-xl transition-all duration-300">
-                <p className="font-heading font-black text-blue-greeny mb-4 uppercase tracking-wider text-sm flex items-center gap-2">
-                  <CheckCircle2 size={18} /> Question {index + 1}
+              <div key={index} className="border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 bg-slate-50/50 dark:bg-slate-800/40">
+                <p className="font-bold text-teal-600 dark:text-teal-400 mb-2 text-xs uppercase tracking-wider flex items-center gap-2">
+                  <CheckCircle2 size={16} /> Question {index + 1}
                 </p>
-                <p className="text-lg font-bold text-text-dark mb-6 leading-relaxed">
+                <p className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-100 mb-4 leading-relaxed">
                   {item.question}
                 </p>
                 
-                <div className="bg-white rounded-2xl p-6 border border-blue-greeny/5 mb-6 shadow-sm">
-                   <p className="text-xs font-black text-text-light uppercase tracking-widest mb-2">Your response</p>
-                   <p className="text-text-dark font-medium">"{item.answer}"</p>
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200/60 dark:border-slate-800 mb-4 shadow-sm">
+                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Your response</p>
+                   <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-normal">"{item.answer}"</p>
                 </div>
 
                 {item.feedback && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="p-4 bg-white rounded-xl border border-blue-greeny/10 text-center">
-                        <p className="text-[10px] font-black text-text-light uppercase tracking-widest">Technical</p>
-                        <p className="text-xl font-black text-blue-greeny">{item.feedback.technical_score}/10</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800 text-center">
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Technical</p>
+                        <p className="text-lg font-black text-teal-600 dark:text-teal-400">{item.feedback.technical_score}/10</p>
                     </div>
-                    <div className="p-4 bg-white rounded-xl border border-blue-greeny/10 text-center">
-                        <p className="text-[10px] font-black text-text-light uppercase tracking-widest">Communication</p>
-                        <p className="text-xl font-black text-purple-500">{item.feedback.communication_score}/10</p>
+                    <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800 text-center">
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Communication</p>
+                        <p className="text-lg font-black text-purple-600 dark:text-purple-400">{item.feedback.communication_score}/10</p>
                     </div>
-                    <div className="p-4 bg-white rounded-xl border border-blue-greeny/10 text-center">
-                        <p className="text-[10px] font-black text-text-light uppercase tracking-widest">Confidence</p>
-                        <p className="text-xl font-black text-orange-500">{item.feedback.confidence_score}/10</p>
+                    <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800 text-center">
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Confidence</p>
+                        <p className="text-lg font-black text-amber-500 dark:text-amber-400">{item.feedback.confidence_score}/10</p>
                     </div>
                   </div>
                 )}
@@ -285,7 +296,6 @@ const AIInterview = () => {
           </div>
         </div>
 
-        {/* 📱 Mobile Bottom Navigation Bar */}
         <MobileBottomNav />
       </div>
     );
@@ -293,49 +303,61 @@ const AIInterview = () => {
 
   /* ================= INTERVIEW UI ================= */
   return (
-    <div className="min-h-screen bg-teeny-greeny p-6 md:p-10 pb-28 md:pb-10 font-sans text-text-dark">
-      <div className="max-w-4xl mx-auto bg-white shadow-2xl rounded-[2.5rem] border border-blue-greeny/5 p-8 md:p-12 animate-in slide-in-from-bottom-4 duration-500">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 md:p-10 pb-28 md:pb-12 font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">
+      <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 shadow-xl rounded-3xl sm:rounded-[2rem] border border-slate-200/80 dark:border-slate-800 p-6 sm:p-10 animate-in slide-in-from-bottom-4 duration-400">
+
+        {/* Top Header */}
+        <div className="flex justify-between items-center mb-8 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <Link
+            to="/student"
+            className="flex items-center gap-2 h-10 px-3.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold transition-all active:scale-95"
+          >
+            <ArrowLeft size={14} />
+            <span>Dashboard</span>
+          </Link>
+          <ThemeToggle />
+        </div>
 
         {!sessionId ? (
           <div className="flex flex-col items-center">
-            <div className="w-20 h-20 bg-blue-greeny rounded-3xl flex items-center justify-center mb-8 shadow-lg shadow-blue-greeny/20 rotate-3">
-               <FileCheck size={40} className="text-white" />
+            <div className="w-16 h-16 bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 rounded-2xl flex items-center justify-center mb-5 shadow-sm">
+               <FileCheck size={32} />
             </div>
             
-            <h1 className="text-4xl font-heading font-black mb-2 uppercase tracking-tight text-center">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white tracking-tight mb-1 text-center">
               AI Mock Interview
             </h1>
-            <p className="text-text-light font-bold uppercase tracking-widest text-[10px] mb-12">Simulate real-world technical rounds</p>
+            <p className="text-slate-400 font-medium text-xs mb-8 text-center">Simulate real-world technical and behavioral interview rounds</p>
 
             {/* Resume Upload Section */}
-            <div className="w-full max-w-sm mb-8">
-                <label className="flex flex-col items-center justify-center w-full h-48 border-4 border-dashed border-teeny-greeny rounded-[2rem] cursor-pointer hover:bg-teeny-greeny/30 transition-all group">
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <UploadCloud className="w-12 h-12 text-blue-greeny mb-4 group-hover:scale-110 transition-transform" />
-                        <p className="text-sm font-black text-text-dark uppercase tracking-widest text-center px-4">
+            <div className="w-full max-w-sm mb-6">
+                <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-teal-500 dark:hover:border-teal-400 rounded-2xl cursor-pointer bg-slate-50/50 dark:bg-slate-800/40 hover:bg-teal-50/20 transition-all group">
+                    <div className="flex flex-col items-center justify-center p-4">
+                        <UploadCloud className="w-10 h-10 text-teal-600 dark:text-teal-400 mb-2 group-hover:scale-110 transition-transform" />
+                        <p className="text-xs font-bold text-slate-700 dark:text-slate-200 text-center px-2">
                             {file ? file.name : "Select Resume"}
                         </p>
-                        <p className="text-[10px] text-text-light font-bold uppercase mt-2">PDF or DOCX only</p>
+                        <p className="text-[10px] text-slate-400 font-medium mt-1">PDF or DOCX format</p>
                     </div>
                     <input type="file" className="hidden" accept=".pdf,.docx" onChange={(e) => setFile(e.target.files[0])} />
                 </label>
             </div>
 
-            {/* --- PROFESSIONAL DIFFICULTY SELECTOR --- */}
-            <div className="w-full max-w-sm mb-10">
-              <label className="text-[11px] font-black text-text-light uppercase tracking-[0.2em] mb-4 block text-center">
-                Select Experience Level
+            {/* Experience Level Selector */}
+            <div className="w-full max-w-sm mb-8">
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2.5 block text-center">
+                Target Difficulty Level
               </label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 {["easy", "medium", "hard"].map((level) => (
                   <button
                     key={level}
                     type="button"
                     onClick={() => setDifficulty(level)}
-                    className={`py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all border-2 flex items-center justify-center gap-1 ${
+                    className={`h-10 rounded-xl font-semibold uppercase tracking-wider text-[11px] transition-all flex items-center justify-center gap-1.5 ${
                       difficulty === level
-                        ? "bg-blue-greeny border-blue-greeny text-white shadow-lg shadow-blue-greeny/30 scale-105"
-                        : "bg-white border-teeny-greeny text-text-light hover:border-blue-greeny/30"
+                        ? "bg-teal-600 text-white shadow-md shadow-teal-600/20"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
                     }`}
                   >
                     {difficulty === level && <Zap size={12} fill="currentColor" />}
@@ -348,80 +370,83 @@ const AIInterview = () => {
             <button
               onClick={triggerWithCooldown(handleStartInterview)}
               disabled={loading || isCoolingDown}
-              className="w-full max-w-sm bg-teal-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-teal-700 transition-all shadow-xl shadow-teal-600/20 flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95"
+              className="w-full max-w-sm h-12 bg-teal-600 text-white rounded-xl font-semibold text-sm hover:bg-teal-700 transition-all shadow-md shadow-teal-600/20 flex items-center justify-center gap-2.5 disabled:opacity-50 active:scale-95"
             >
               {loading ? (
                 <>
-                  <Loader2 className="animate-spin" size={20} strokeWidth={3} />
-                  Analyzing Profile...
+                  <Loader2 className="animate-spin" size={18} />
+                  <span>Synthesizing Interview Profile...</span>
                 </>
               ) : (
                 <>
-                  <CheckCircle2 size={20} strokeWidth={3} /> START SESSION
+                  <CheckCircle2 size={18} />
+                  <span>Launch Interview Session</span>
                 </>
               )}
             </button>
           </div>
         ) : (
-          <div className="animate-in fade-in duration-500">
-            <div className="flex items-center justify-between mb-8">
-                <h2 className="text-xl font-heading font-black uppercase tracking-tight border-l-4 border-teal-600 pl-3">
-                  Live Session
+          <div className="animate-in fade-in duration-300">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white uppercase tracking-tight border-l-4 border-teal-600 pl-3">
+                  Live Technical Round
                 </h2>
-                <div className="flex items-center gap-2 px-4 py-1.5 bg-rose-50 dark:bg-rose-950/40 rounded-full border border-rose-100 dark:border-rose-900/50">
+                <div className="flex items-center gap-2 px-3 py-1 bg-rose-50 dark:bg-rose-950/40 rounded-full border border-rose-200/60 dark:border-rose-900/50">
                     <span className="w-2 h-2 bg-rose-500 rounded-full animate-pulse"></span>
-                    <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest">
-                      {listening ? "Recording Active" : "Microphone Ready"}
+                    <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">
+                      {listening ? "Dictation Active" : "Mic Standby"}
                     </span>
                 </div>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-800/60 p-6 sm:p-8 rounded-[2rem] mb-8 border border-slate-200/80 dark:border-slate-700/80 flex justify-between items-start gap-4 shadow-inner relative overflow-hidden group">
-              <p className="text-base sm:text-xl font-bold text-slate-800 dark:text-slate-100 leading-relaxed relative z-10">
+            <div className="bg-slate-50 dark:bg-slate-800/60 p-5 sm:p-6 rounded-2xl mb-6 border border-slate-200/80 dark:border-slate-700/80 flex justify-between items-start gap-3 shadow-sm">
+              <p className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-100 leading-relaxed">
                   {currentQuestion}
               </p>
               <button 
                 type="button"
                 onClick={() => speakQuestion(currentQuestion)}
-                title="Replay Audio Question"
-                className="w-11 h-11 bg-white dark:bg-slate-700 rounded-2xl flex items-center justify-center text-teal-600 dark:text-teal-400 shadow-sm hover:shadow-md transition-all relative z-10 shrink-0 active:scale-95"
+                title="Replay Audio"
+                className="w-10 h-10 bg-white dark:bg-slate-700 rounded-xl flex items-center justify-center text-teal-600 dark:text-teal-400 shadow-sm hover:shadow-md transition-all shrink-0 active:scale-95"
               >
-                <Volume2 size={22} />
+                <Volume2 size={18} />
               </button>
             </div>
 
-            <div className="mb-8">
+            <div className="mb-6">
                 <BoundedInput
                   id="interview-answer-input"
                   as="textarea"
                   rows={5}
                   label="Your Response (Spoken or Typed)"
-                  placeholder="Analyze the question and provide your structured response here..."
+                  placeholder="Analyze the problem and articulate your response clearly..."
                   value={answer}
                   onChange={(val) => setAnswer(val)}
                   maxChars={1200}
                   minChars={10}
                   maxWords={200}
-                  helperText="Speak via microphone or type your answer."
+                  helperText="Use voice dictation or type your answer directly."
                 />
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-3">
               {!listening ? (
                 <button
                   type="button"
                   onClick={startListening}
-                  className="flex-1 bg-white dark:bg-slate-800 border border-teal-500/30 text-teal-700 dark:text-teal-300 px-6 py-4 rounded-2xl font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-3 hover:bg-teal-50 dark:hover:bg-slate-700/60 transition-all active:scale-95 shadow-sm"
+                  className="flex-1 h-11 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-semibold text-xs flex items-center justify-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-all active:scale-95 shadow-sm"
                 >
-                  <Mic size={18} /> Start Voice Dictation
+                  <Mic size={16} className="text-teal-600 dark:text-teal-400" /> 
+                  <span>Start Voice Input</span>
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={stopListening}
-                  className="flex-1 bg-rose-600 text-white px-6 py-4 rounded-2xl font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-3 animate-pulse transition-all shadow-lg shadow-rose-200 dark:shadow-none active:scale-95"
+                  className="flex-1 h-11 bg-rose-600 text-white rounded-xl font-semibold text-xs flex items-center justify-center gap-2 animate-pulse transition-all shadow-md shadow-rose-600/20 active:scale-95"
                 >
-                  <MicOff size={18} /> Stop Dictation
+                  <MicOff size={16} /> 
+                  <span>Stop Voice Input</span>
                 </button>
               )}
 
@@ -429,21 +454,19 @@ const AIInterview = () => {
                 type="button"
                 onClick={triggerWithCooldown(handleSubmitAnswer)}
                 disabled={loading || isCoolingDown}
-                className="flex-1 bg-teal-600 hover:bg-teal-700 text-white px-6 py-4 rounded-2xl font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-3 transition-all shadow-xl shadow-teal-600/20 disabled:opacity-50 active:scale-95"
+                className="flex-1 h-11 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-teal-600/20 disabled:opacity-50 active:scale-95"
               >
-                {loading ? <Loader2 className="animate-spin" size={18} /> : "SUBMIT RESPONSE"}
+                {loading ? <Loader2 className="animate-spin" size={16} /> : "Submit Response"}
               </button>
             </div>
           </div>
         )}
 
-        {/* Transparent Privacy & Data Security Badge */}
-        <div className="flex justify-center mt-10">
+        <div className="flex justify-center mt-8">
           <PrivacyBadge />
         </div>
       </div>
 
-      {/* 📱 Mobile Bottom Navigation Bar */}
       <MobileBottomNav />
     </div>
   );

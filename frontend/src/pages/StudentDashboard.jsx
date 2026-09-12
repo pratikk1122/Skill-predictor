@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, Video, Brain, PieChart, Users, Building2, ChevronRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion'; // ✨ Animations upgrade
+import { motion } from 'framer-motion';
 import api from "../services/api";
 import Sidebar from "../components/Sidebar";
 import Navbar from "../components/Navbar";
@@ -11,13 +11,16 @@ const StudentDashboard = () => {
   const navigate = useNavigate();
   const [profileImage, setProfileImage] = useState(null);
   const [studentInfo, setStudentInfo] = useState({ name: "", email: "" });
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const storedName = localStorage.getItem("userName"); 
     const storedEmail = localStorage.getItem("userEmail");
+    const storedImage = localStorage.getItem("userProfileImage");
     
+    if (storedImage) {
+      setProfileImage(storedImage);
+    }
+
     setStudentInfo({
       name: storedName || "Student User",
       email: storedEmail || "student@skillpredictor.com"
@@ -26,21 +29,17 @@ const StudentDashboard = () => {
 
   const handleLogout = async () => {
     try {
-      await api.post("/auth/logout", {}, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-      });
-    } catch (err) { console.error("Logout API failed"); }
-    
-    localStorage.clear();
-    navigate("/login");
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setProfileImage(reader.result);
-      reader.readAsDataURL(file);
+      const token = localStorage.getItem("token");
+      if (token) {
+        await api.post("/auth/logout", {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+    } catch {
+      // Ignore network failure on logout
+    } finally {
+      localStorage.clear();
+      navigate("/login");
     }
   };
 
@@ -60,76 +59,71 @@ const StudentDashboard = () => {
     visible: {
       opacity: 1,
       transition: { 
-        staggerChildren: 0.15,
-        delayChildren: 0.2
+        staggerChildren: 0.1,
+        delayChildren: 0.15
       }
     }
   };
 
   const itemVariants = {
-    hidden: { y: 30, opacity: 0 },
+    hidden: { y: 20, opacity: 0 },
     visible: { 
       y: 0, 
       opacity: 1,
-      transition: { type: "spring", stiffness: 100 }
+      transition: { type: "spring", stiffness: 120, damping: 14 }
     }
   };
 
   return (
-    <div className="flex h-screen bg-[#f8fafc] font-sans text-slate-900 overflow-hidden relative">
-      {/* Dynamic Background Pattern */}
-      <div className="absolute top-0 left-0 w-full h-full opacity-[0.04] pointer-events-none z-0" 
-           style={{ backgroundImage: `radial-gradient(#0d9488 1.5px, transparent 1.5px)`, backgroundSize: '40px 40px' }}></div>
-
-      <input type="file" ref={fileInputRef} onChange={handleImageChange} className="hidden" accept="image/*" />
-      
-      <Sidebar 
-        handleLogout={handleLogout} 
-        isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)} 
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 overflow-hidden relative">
+      {/* Background Subtle Gradient Grid */}
+      <div 
+        className="absolute top-0 left-0 w-full h-full opacity-[0.03] dark:opacity-[0.05] pointer-events-none z-0" 
+        style={{ backgroundImage: `radial-gradient(#0d9488 1.5px, transparent 1.5px)`, backgroundSize: '36px 36px' }}
       />
 
-      <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-12 pb-28 md:pb-12 relative z-10 scroll-smooth">
+      {/* Desktop Persistent Sidebar */}
+      <Sidebar handleLogout={handleLogout} />
+
+      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-10 pb-28 md:pb-12 relative z-10 scroll-smooth">
         <Navbar 
           profileImage={profileImage} 
           setProfileImage={setProfileImage}
-          fileInputRef={fileInputRef}
           studentName={studentInfo.name}
           studentEmail={studentInfo.email}
-          onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
         />
 
-        {/* Welcome Section with Reveal Animation */}
+        {/* Welcome Section */}
         <motion.div 
-          initial={{ opacity: 0, x: -30 }}
+          initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="mb-4 sm:mb-8 lg:mb-12 mt-1 sm:mt-4 lg:mt-6"
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="mb-6 sm:mb-8 mt-1 sm:mt-3"
         >
-          <h1 className="text-xl sm:text-3xl lg:text-4xl font-black text-slate-800 tracking-tight leading-tight">
-            Welcome back, <span className="text-teal-600 capitalize">{studentInfo.name}</span>! 👋
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/60 px-2.5 py-0.5 rounded-full border border-teal-200/60 dark:border-teal-800/60">
+              Student Workspace
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-tight">
+            Welcome back, <span className="text-teal-600 dark:text-teal-400 capitalize">{studentInfo.name}</span>! 👋
           </h1>
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="text-slate-500 mt-1 sm:mt-2 text-xs sm:text-base lg:text-lg font-medium"
-          >
-            Your path to professional excellence starts here.
-          </motion.p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1 sm:mt-1.5 text-xs sm:text-sm font-medium">
+            Track your preparedness, master technical domains, and accelerate your placement journey.
+          </p>
         </motion.div>
 
-        {/* Animated Grid System: 2 Columns on Mobile, 3 on Desktop */}
+        {/* Responsive Grid System */}
         <motion.div 
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-6 lg:gap-8 pb-10"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6 pb-8"
         >
           <FeatureCard 
             variants={itemVariants}
             title="Resume Scorer" 
-            desc="AI-powered ATS score & detailed analysis feedback." 
+            desc="AI-powered ATS score, recruiter heat-map simulation, and targeted keyword gap analysis." 
             icon={<FileText />} 
             color="bg-gradient-to-br from-blue-500 to-blue-700"
             onClick={handleResumeScorerClick}
@@ -138,7 +132,7 @@ const StudentDashboard = () => {
           <FeatureCard 
             variants={itemVariants}
             title="AI Mock Interview" 
-            desc="Real-time technical & HR practice with AI feedback." 
+            desc="Real-time voice & technical simulations with adaptive AI questioning and instant evaluation." 
             icon={<Video />} 
             color="bg-gradient-to-br from-purple-500 to-purple-700"
             onClick={handleAIInterviewClick}
@@ -147,42 +141,42 @@ const StudentDashboard = () => {
           <FeatureCard 
             variants={itemVariants}
             title="Aptitude Test" 
-            desc="Master quantitative, verbal & logical reasoning." 
+            desc="Targeted quantitative, verbal, and logical practice modules with instant answer breakdowns." 
             icon={<Brain />} 
-            color="bg-gradient-to-br from-orange-500 to-orange-700"
+            color="bg-gradient-to-br from-amber-500 to-orange-600"
             onClick={handleAptitudeClick}
           />
 
           <FeatureCard 
             variants={itemVariants}
-            title="Analytics" 
-            desc="Visualise your performance and growth charts." 
+            title="Performance Analytics" 
+            desc="Multi-dimensional competency radar, study schedules, and personalized score improvements." 
             icon={<PieChart />} 
-            color="bg-gradient-to-br from-teal-500 to-teal-700"
+            color="bg-gradient-to-br from-teal-500 to-emerald-600"
             onClick={handleAnalyticsClick}
           />
 
           <FeatureCard 
             variants={itemVariants}
             title="Group Discussion" 
-            desc="AI-moderated communication rooms for practice." 
+            desc="AI-moderated peer debate rooms with sentiment, fluency, and leadership impact tracking." 
             icon={<Users />} 
-            color="bg-gradient-to-br from-pink-500 to-pink-700" 
+            color="bg-gradient-to-br from-pink-500 to-rose-600" 
             onClick={handleGDClick}
           />
 
           <FeatureCard 
             variants={itemVariants}
-            title="Company Prep" 
-            desc="Specific preparation modules for Tech Giants." 
+            title="Company Prep Hub" 
+            desc="RAG-curated technical test patterns and placement blueprints for top engineering companies." 
             icon={<Building2 />} 
-            color="bg-gradient-to-br from-indigo-500 to-indigo-700" 
+            color="bg-gradient-to-br from-indigo-500 to-violet-700" 
             onClick={handleCompanyPrepClick}
           />
         </motion.div>
       </main>
 
-      {/* 📱 Mobile App Bottom Navigation Bar */}
+      {/* 📱 Mobile Bottom Navigation Bar */}
       <MobileBottomNav />
     </div>
   );
@@ -192,62 +186,41 @@ const FeatureCard = ({ title, desc, icon, color, onClick, variants }) => (
   <motion.div
     variants={variants}
     whileHover={{ 
-      y: -8, 
-      scale: 1.02,
-      transition: { duration: 0.25, ease: "easeInOut" } 
+      y: -5, 
+      transition: { duration: 0.2, ease: "easeOut" } 
     }}
-    whileTap={{ scale: 0.96 }}
+    whileTap={{ scale: 0.98 }}
     onClick={onClick}
-    className="bg-white p-3 sm:p-6 lg:p-8 rounded-2xl sm:rounded-[2rem] lg:rounded-[2.5rem] border border-slate-200/60 shadow-[0_4px_16px_-6px_rgba(0,0,0,0.05)] sm:shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-xl transition-all duration-300 group cursor-pointer relative overflow-hidden flex flex-col justify-between h-full"
+    className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-xl dark:hover:border-slate-700 transition-all duration-300 group cursor-pointer flex flex-col justify-between h-full relative overflow-hidden"
   >
-    {/* Animated Floating Glow */}
-    <motion.div 
-      animate={{ 
-        scale: [1, 1.2, 1],
-        rotate: [0, 90, 0] 
-      }}
-      transition={{ duration: 8, repeat: Infinity }}
-      className={`absolute -top-10 -right-10 w-24 h-24 sm:w-40 sm:h-40 opacity-[0.08] rounded-full blur-2xl sm:blur-3xl ${color}`}
-    ></motion.div>
+    {/* Subtle Background Glow */}
+    <div className={`absolute -top-12 -right-12 w-28 h-28 opacity-[0.06] dark:opacity-[0.12] rounded-full blur-2xl ${color}`} />
 
     <div>
-      {/* Icon Container with Hover Rotation */}
-      <div className={`w-10 h-10 sm:w-14 sm:h-14 lg:w-16 lg:h-16 ${color} rounded-xl sm:rounded-[1.25rem] flex items-center justify-center text-white mb-2 sm:mb-5 lg:mb-7 shadow-md sm:shadow-xl transform group-hover:rotate-[8deg] transition-all duration-300 ease-out`}>
-        <span className="block sm:hidden">
-          {React.cloneElement(icon, { size: 18, strokeWidth: 2.3 })}
-        </span>
-        <span className="hidden sm:block lg:hidden">
-          {React.cloneElement(icon, { size: 24, strokeWidth: 2.4 })}
-        </span>
-        <span className="hidden lg:block">
-          {React.cloneElement(icon, { size: 28, strokeWidth: 2.5 })}
-        </span>
+      {/* Icon Badge */}
+      <div className={`w-11 h-11 sm:w-12 sm:h-12 ${color} rounded-xl sm:rounded-2xl flex items-center justify-center text-white mb-3.5 sm:mb-4 shadow-md group-hover:scale-105 transition-transform duration-300`}>
+        {React.cloneElement(icon, { size: 22, strokeWidth: 2.2 })}
       </div>
 
-      <h3 className="text-xs sm:text-lg lg:text-2xl font-bold text-slate-800 mb-1 sm:mb-2 lg:mb-3 group-hover:text-teal-600 transition-colors tracking-tight leading-snug line-clamp-1 sm:line-clamp-none">
+      {/* Title */}
+      <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-white mb-1.5 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors tracking-tight">
         {title}
       </h3>
       
-      <p className="text-slate-500 text-[10px] sm:text-xs lg:text-[15px] leading-tight sm:leading-relaxed mb-2 sm:mb-5 lg:mb-8 font-normal sm:font-medium line-clamp-2 sm:line-clamp-none">
+      {/* Description */}
+      <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-[13px] leading-relaxed mb-4 font-normal">
         {desc}
       </p>
     </div>
 
-    {/* Animated Action Button */}
-    <div className="flex items-center gap-1 sm:gap-2 text-teal-600 font-bold sm:font-extrabold text-[10px] sm:text-xs lg:text-[14px] uppercase tracking-wider sm:tracking-widest transition-all mt-auto pt-1">
-      <span className="relative overflow-hidden group">
-        <span className="sm:hidden">Open</span>
-        <span className="hidden sm:inline">Open Tool</span>
-        <span className="absolute bottom-0 left-0 w-0 h-[1.5px] sm:h-[2px] bg-teal-600 group-hover:w-full transition-all duration-300"></span>
+    {/* Balanced Action Bar */}
+    <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800/80 mt-auto">
+      <span className="text-xs font-bold text-teal-600 dark:text-teal-400 group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">
+        Launch Module
       </span>
-      <motion.div
-        animate={{ x: [0, 3, 0] }}
-        transition={{ duration: 1.5, repeat: Infinity }}
-      >
-        <ChevronRight size={13} className="sm:hidden" />
-        <ChevronRight size={18} className="hidden sm:block lg:hidden" />
-        <ChevronRight size={20} className="hidden lg:block" />
-      </motion.div>
+      <div className="w-7 h-7 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 flex items-center justify-center group-hover:bg-teal-600 group-hover:text-white dark:group-hover:bg-teal-500 transition-all">
+        <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+      </div>
     </div>
   </motion.div>
 );

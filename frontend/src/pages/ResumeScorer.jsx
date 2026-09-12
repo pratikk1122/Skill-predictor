@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import MobileBottomNav from "../components/MobileBottomNav";
+import ThemeToggle from "../components/common/ThemeToggle";
 import BoundedInput from "../components/common/BoundedInput";
 import LoadingTelemetry from "../components/common/LoadingTelemetry";
 import { ScoreCardSkeleton } from "../components/common/Skeleton";
@@ -165,33 +166,35 @@ ${result.breakdown ? Object.entries(result.breakdown).map(([k, v]) => `• ${k}:
             </p>
           </div>
           
-          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+            <ThemeToggle />
+            
             {result && (
               <>
                 <button
                   type="button"
                   onClick={copyShareableSummary}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl text-xs font-bold transition-all active:scale-95 shadow-sm"
+                  className="flex items-center gap-2 h-10 px-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition-all active:scale-95 shadow-sm"
                 >
                   {copiedSummary ? <Check size={14} className="text-emerald-500" /> : <Share2 size={14} />}
-                  <span>{copiedSummary ? "Copied to Clipboard!" : "Copy Summary"}</span>
+                  <span>{copiedSummary ? "Copied!" : "Share Summary"}</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={triggerWithCooldown(downloadAnnotatedPDF)}
                   disabled={isGeneratingPDF || isCoolingDown}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl text-xs font-bold shadow-lg shadow-teal-600/20 active:scale-95 disabled:opacity-50 transition-all"
+                  className="flex items-center gap-2 h-10 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-teal-600/20 active:scale-95 disabled:opacity-50 transition-all"
                 >
                   <Download size={14} className={isGeneratingPDF ? "animate-bounce" : ""} />
-                  <span>{isGeneratingPDF ? "Compiling PDF..." : "Download Annotated Resume"}</span>
+                  <span>{isGeneratingPDF ? "Compiling..." : "Download Annotated"}</span>
                 </button>
               </>
             )}
 
             <Link
               to="/student"
-              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-teal-400 transition-all shadow-sm active:scale-95"
+              className="flex items-center gap-2 h-10 px-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-teal-400 transition-all shadow-sm active:scale-95"
             >
               <ArrowLeft size={14} />
               <span>Dashboard</span>
@@ -246,10 +249,10 @@ ${result.breakdown ? Object.entries(result.breakdown).map(([k, v]) => `• ${k}:
             <input type="file" id="resume-upload" className="hidden" onChange={handleFileUpload} accept=".pdf,.docx" />
             <label
               htmlFor="resume-upload"
-              className="inline-flex items-center gap-3 px-10 py-4 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl font-bold uppercase tracking-wider text-xs sm:text-sm shadow-xl shadow-teal-600/20 cursor-pointer transition-all hover:scale-105 active:scale-95"
+              className="inline-flex items-center justify-center gap-2.5 h-12 px-7 bg-teal-600 hover:bg-teal-700 text-white rounded-xl font-semibold text-sm shadow-lg shadow-teal-600/20 cursor-pointer transition-all hover:bg-teal-600/90 active:scale-95"
             >
               <FileText size={18} />
-              <span>Select Document (PDF/DOCX)</span>
+              <span>Select Document (PDF / DOCX)</span>
             </label>
             <div className="mt-8 flex justify-center gap-6 text-[10px] font-mono uppercase tracking-widest text-slate-400 dark:text-slate-500">
               <span>PDF Supported</span> • <span>DOCX Supported</span> • <span>Max 10MB</span>
@@ -464,7 +467,7 @@ ${result.breakdown ? Object.entries(result.breakdown).map(([k, v]) => `• ${k}:
                 <button
                   type="button"
                   onClick={() => { setResult(null); setFileName(""); setError(""); setFileBase64(""); }}
-                  className="flex items-center gap-2 px-8 py-3.5 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 text-white rounded-2xl font-bold uppercase tracking-wider text-xs transition-all shadow-md active:scale-95"
+                  className="flex items-center gap-2 h-11 px-5 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 text-white rounded-xl font-semibold text-xs transition-all shadow-sm active:scale-95"
                 >
                   <RefreshCw size={14} />
                   <span>Analyze Another Document</span>
@@ -473,10 +476,10 @@ ${result.breakdown ? Object.entries(result.breakdown).map(([k, v]) => `• ${k}:
                 <button
                   type="button"
                   onClick={copyShareableSummary}
-                  className="flex items-center gap-2 px-8 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl font-bold uppercase tracking-wider text-xs transition-all shadow-sm active:scale-95 hover:border-teal-400"
+                  className="flex items-center gap-2 h-11 px-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-semibold text-xs transition-all shadow-sm active:scale-95 hover:border-teal-400"
                 >
                   {copiedSummary ? <Check size={14} className="text-emerald-500" /> : <Share2 size={14} />}
-                  <span>{copiedSummary ? "Copied!" : "Share Summary"}</span>
+                  <span>{copiedSummary ? "Copied Summary!" : "Share Summary"}</span>
                 </button>
               </div>
 

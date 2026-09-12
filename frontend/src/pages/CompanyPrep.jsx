@@ -1,37 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios'; // 🔥 Requirement: Added for API call
+import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 import { ROUTES } from "../routes/routes"; 
+import MobileBottomNav from "../components/MobileBottomNav";
+import ThemeToggle from "../components/common/ThemeToggle";
+import { 
+  ArrowLeft, 
+  Search, 
+  Sparkles, 
+  Radar, 
+  Building2, 
+  ExternalLink, 
+  Compass, 
+  ChevronRight 
+} from "lucide-react";
 
-// --- DATA: Brand Colors & Conceptual Icons ---
+// --- DATA: Brand Colors & Conceptual Metadata ---
 const companyData = [
-  { name: "Google", type: "Product", gradient: "from-blue-500 via-red-500 to-yellow-500", icon: "fab fa-google", glow: "group-hover:shadow-blue-500/30" },
-  { name: "Microsoft", type: "Product", gradient: "from-blue-600 to-cyan-500", icon: "fab fa-microsoft", glow: "group-hover:shadow-cyan-500/30" },
-  { name: "Amazon", type: "Product", gradient: "from-orange-500 to-yellow-500", icon: "fab fa-amazon", glow: "group-hover:shadow-orange-500/30" },
-  { name: "NVIDIA", type: "Product", gradient: "from-green-500 to-emerald-700", icon: "fas fa-microchip", glow: "group-hover:shadow-green-500/30" },
-  { name: "Adobe", type: "Product", gradient: "from-red-600 to-pink-600", icon: "fab fa-adn", glow: "group-hover:shadow-red-500/30" }, 
-  { name: "Intel", type: "Product", gradient: "from-blue-600 to-indigo-600", icon: "fas fa-layer-group", glow: "group-hover:shadow-blue-600/30" },
-  { name: "Oracle", type: "Product", gradient: "from-red-500 to-orange-600", icon: "fas fa-database", glow: "group-hover:shadow-red-500/30" },
-  { name: "SAP", type: "Product", gradient: "from-blue-800 to-cyan-600", icon: "fas fa-server", glow: "group-hover:shadow-blue-800/30" },
-  { name: "Freshworks", type: "Product", gradient: "from-pink-500 to-orange-400", icon: "fas fa-ticket-alt", glow: "group-hover:shadow-pink-500/30" },
-  { name: "Zoho", type: "Product", gradient: "from-yellow-500 to-red-500", icon: "fas fa-briefcase", glow: "group-hover:shadow-yellow-500/30" },
-  { name: "TCS", type: "Service", gradient: "from-indigo-600 to-blue-500", icon: "fas fa-building", glow: "group-hover:shadow-indigo-500/30" },
-  { name: "Infosys", type: "Service", gradient: "from-blue-600 to-cyan-500", icon: "fas fa-code", glow: "group-hover:shadow-cyan-500/30" },
-  { name: "Wipro", type: "Service", gradient: "from-green-500 to-teal-400", icon: "fas fa-laptop-code", glow: "group-hover:shadow-teal-500/30" },
-  { name: "Cognizant", type: "Service", gradient: "from-blue-800 to-indigo-500", icon: "fas fa-users-cog", glow: "group-hover:shadow-indigo-500/30" },
-  { name: "Accenture", type: "Service", gradient: "from-purple-600 to-indigo-600", icon: "fas fa-globe", glow: "group-hover:shadow-purple-500/30" },
-  { name: "Capgemini", type: "Service", gradient: "from-blue-500 to-blue-700", icon: "fas fa-handshake", glow: "group-hover:shadow-blue-600/30" },
-  { name: "HCLTech", type: "Service", gradient: "from-blue-400 to-indigo-600", icon: "fas fa-network-wired", glow: "group-hover:shadow-indigo-500/30" },
-  { name: "Tech Mahindra", type: "Service", gradient: "from-red-600 to-red-400", icon: "fas fa-cogs", glow: "group-hover:shadow-red-500/30" },
-  { name: "Persistent", type: "Service", gradient: "from-orange-500 to-red-500", icon: "fas fa-chart-line", glow: "group-hover:shadow-orange-500/30" },
-  { name: "Zensar", type: "Service", gradient: "from-cyan-600 to-blue-600", icon: "fas fa-cloud", glow: "group-hover:shadow-cyan-500/30" },
-  { name: "Mu Sigma", type: "Analytics", gradient: "from-blue-500 to-purple-500", icon: "fas fa-infinity", glow: "group-hover:shadow-purple-500/30" },
-  { name: "Fractal", type: "Analytics", gradient: "from-yellow-500 to-orange-500", icon: "fas fa-brain", glow: "group-hover:shadow-yellow-500/30" },
-  { name: "Tiger Analytics", type: "Analytics", gradient: "from-orange-400 to-red-500", icon: "fas fa-chart-bar", glow: "group-hover:shadow-orange-500/30" },
-  { name: "Tredence", type: "Analytics", gradient: "from-teal-400 to-blue-500", icon: "fas fa-project-diagram", glow: "group-hover:shadow-teal-500/30" },
-  { name: "IBM", type: "MNC", gradient: "from-blue-700 to-indigo-800", icon: "fas fa-server", glow: "group-hover:shadow-indigo-500/30" },
-  { name: "CDAC", type: "Govt", gradient: "from-slate-600 to-slate-800", icon: "fas fa-university", glow: "group-hover:shadow-slate-500/30" },
-  { name: "Internshala", type: "Startup", gradient: "from-blue-400 to-cyan-300", icon: "fas fa-rocket", glow: "group-hover:shadow-cyan-400/30" },
+  { name: "Google", type: "Product", gradient: "from-blue-500 via-red-500 to-yellow-500", glow: "group-hover:shadow-blue-500/20" },
+  { name: "Microsoft", type: "Product", gradient: "from-blue-600 to-cyan-500", glow: "group-hover:shadow-cyan-500/20" },
+  { name: "Amazon", type: "Product", gradient: "from-orange-500 to-yellow-500", glow: "group-hover:shadow-orange-500/20" },
+  { name: "NVIDIA", type: "Product", gradient: "from-green-500 to-emerald-700", glow: "group-hover:shadow-green-500/20" },
+  { name: "Adobe", type: "Product", gradient: "from-red-600 to-pink-600", glow: "group-hover:shadow-red-500/20" }, 
+  { name: "Intel", type: "Product", gradient: "from-blue-600 to-indigo-600", glow: "group-hover:shadow-blue-600/20" },
+  { name: "Oracle", type: "Product", gradient: "from-red-500 to-orange-600", glow: "group-hover:shadow-red-500/20" },
+  { name: "SAP", type: "Product", gradient: "from-blue-800 to-cyan-600", glow: "group-hover:shadow-blue-800/20" },
+  { name: "Freshworks", type: "Product", gradient: "from-pink-500 to-orange-400", glow: "group-hover:shadow-pink-500/20" },
+  { name: "Zoho", type: "Product", gradient: "from-yellow-500 to-red-500", glow: "group-hover:shadow-yellow-500/20" },
+  { name: "TCS", type: "Service", gradient: "from-indigo-600 to-blue-500", glow: "group-hover:shadow-indigo-500/20" },
+  { name: "Infosys", type: "Service", gradient: "from-blue-600 to-cyan-500", glow: "group-hover:shadow-cyan-500/20" },
+  { name: "Wipro", type: "Service", gradient: "from-green-500 to-teal-400", glow: "group-hover:shadow-teal-500/20" },
+  { name: "Cognizant", type: "Service", gradient: "from-blue-800 to-indigo-500", glow: "group-hover:shadow-indigo-500/20" },
+  { name: "Accenture", type: "Service", gradient: "from-purple-600 to-indigo-600", glow: "group-hover:shadow-purple-500/20" },
+  { name: "Capgemini", type: "Service", gradient: "from-blue-500 to-blue-700", glow: "group-hover:shadow-blue-600/20" },
+  { name: "HCLTech", type: "Service", gradient: "from-blue-400 to-indigo-600", glow: "group-hover:shadow-indigo-500/20" },
+  { name: "Tech Mahindra", type: "Service", gradient: "from-red-600 to-red-400", glow: "group-hover:shadow-red-500/20" },
+  { name: "Persistent", type: "Service", gradient: "from-orange-500 to-red-500", glow: "group-hover:shadow-orange-500/20" },
+  { name: "Zensar", type: "Service", gradient: "from-cyan-600 to-blue-600", glow: "group-hover:shadow-cyan-500/20" },
+  { name: "Mu Sigma", type: "Analytics", gradient: "from-blue-500 to-purple-500", glow: "group-hover:shadow-purple-500/20" },
+  { name: "Fractal", type: "Analytics", gradient: "from-yellow-500 to-orange-500", glow: "group-hover:shadow-yellow-500/20" },
+  { name: "Tiger Analytics", type: "Analytics", gradient: "from-orange-400 to-red-500", glow: "group-hover:shadow-orange-500/20" },
+  { name: "Tredence", type: "Analytics", gradient: "from-teal-400 to-blue-500", glow: "group-hover:shadow-teal-500/20" },
+  { name: "IBM", type: "MNC", gradient: "from-blue-700 to-indigo-800", glow: "group-hover:shadow-indigo-500/20" },
+  { name: "CDAC", type: "Govt", gradient: "from-slate-600 to-slate-800", glow: "group-hover:shadow-slate-500/20" },
+  { name: "Internshala", type: "Startup", gradient: "from-blue-400 to-cyan-300", glow: "group-hover:shadow-cyan-400/20" },
 ];
 
 const CompanyPrep = () => {
@@ -43,13 +55,11 @@ const CompanyPrep = () => {
     setLoaded(true);
   }, []);
 
-  // 🔥 NEW: Function to record activity before navigation
   const handleCompanyClick = async (company) => {
     try {
       const token = localStorage.getItem("token"); 
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
       
-      // ✅ Record Start Activity in New Collection
       const res = await axios.post(
         `${API_URL}/company-prep/start`, 
         { 
@@ -61,16 +71,13 @@ const CompanyPrep = () => {
         }
       );
 
-      // 🔥 CORRECTED ROUTING: Now routes to /company-prep/:companyName
       if (res.data.success && res.data.attemptId) {
         navigate(`/company-prep/${company.name.toLowerCase()}?attemptId=${res.data.attemptId}`);
       } else {
         navigate(`/company-prep/${company.name.toLowerCase()}`);
       }
 
-    } catch (err) {
-      console.error("Activity tracking failed:", err.message);
-      // 🔥 CORRECTED ROUTING: Fallback navigation if API fails
+    } catch {
       navigate(`/company-prep/${company.name.toLowerCase()}`);
     }
   };
@@ -80,121 +87,123 @@ const CompanyPrep = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans selection:bg-blue-greeny/20 overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100 selection:bg-teal-500/20 pb-28 md:pb-12 transition-colors duration-300">
       
-      {/* Background Ambience */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-greeny/10 rounded-full blur-[100px]"></div>
-          <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-purple-500/10 rounded-full blur-[100px]"></div>
-      </div>
-
       {/* Header Section */}
-      <div className="relative z-10 bg-white/50 backdrop-blur-md border-b border-white/20 pt-24 pb-16 px-6">
-        <div className="max-w-7xl mx-auto">
-          <button 
-            onClick={() => navigate(ROUTES.STUDENT_DASHBOARD)}
-            className="inline-flex items-center gap-2 text-slate-500 hover:text-blue-greeny transition-all mb-8 text-sm font-bold uppercase tracking-widest group"
-          >
-            <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-md border border-slate-100 group-hover:-translate-x-1 transition-transform">
-                <i className="fas fa-arrow-left"></i>
-            </span> 
-            Back to Dashboard
-          </button>
-          
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-            <div>
-              <h1 className="text-5xl md:text-7xl font-heading font-black text-slate-800 mb-6 tracking-tight">
-                Company <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-greeny to-teal-500">Specifics</span>
-              </h1>
-              
-              <p className="text-xl text-slate-500 max-w-2xl font-medium leading-relaxed">
-                Crack the interview patterns of top tech giants.
-                <span className="font-bold text-slate-800"> Powered by Live RAG Engine.</span>
-              </p>
-            </div>
-
-            <button 
-              onClick={() => navigate('/skill-radar')}
-              className="bg-white border-2 border-slate-100 text-slate-600 px-6 py-4 rounded-2xl font-bold hover:border-teal-500 hover:text-teal-600 hover:shadow-xl hover:shadow-teal-500/10 transition-all flex items-center gap-3 group whitespace-nowrap"
+      <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-40 shadow-sm border-b border-slate-200/80 dark:border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link 
+              to={ROUTES.STUDENT_DASHBOARD} 
+              className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-teal-600 hover:border-teal-500 transition-all border border-slate-200 dark:border-slate-700 shadow-sm active:scale-95"
+              title="Return to Dashboard"
             >
-              <div className="w-10 h-10 bg-teal-50 rounded-full flex items-center justify-center text-teal-500 group-hover:scale-110 transition-transform">
-                <i className="fas fa-chart-pie text-lg"></i>
-              </div>
-              View Skill Radar
-            </button>
+              <ArrowLeft size={18} />
+            </Link>
+            <div>
+              <h1 className="text-base sm:text-lg font-black text-slate-800 dark:text-white tracking-tight">
+                Company <span className="text-teal-600 dark:text-teal-400">Prep Hub</span>
+              </h1>
+              <p className="text-[10px] text-slate-400 font-medium hidden sm:block">Targeted Placement Blueprints & RAG Patterns</p>
+            </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="mt-12 relative max-w-xl group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-greeny to-purple-500 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-500"></div>
-            <div className="relative bg-white rounded-2xl flex items-center shadow-xl p-1">
-                <div className="w-12 h-12 flex items-center justify-center text-slate-400">
-                   <i className="fas fa-search text-xl"></i>
-                </div>
-                <input 
-                    type="text" 
-                    placeholder="Search Google, Amazon, TCS..." 
-                    className="w-full h-12 pr-6 border-none outline-none text-slate-800 font-bold text-lg bg-transparent"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+          <div className="flex items-center gap-2.5">
+            <button 
+              onClick={() => navigate('/skill-radar')}
+              className="hidden sm:flex items-center gap-2 h-10 px-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 transition-all shadow-sm"
+            >
+              <Radar size={15} className="text-teal-600 dark:text-teal-400" />
+              <span>Skill Radar</span>
+            </button>
+            <ThemeToggle />
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content Deck */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-8 sm:mt-12">
+        <div className="text-center mb-8 sm:mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200/60 dark:border-teal-800/60 mb-3">
+            <Sparkles size={13} />
+            <span>Interview Blueprint Engine</span>
+          </div>
+          <h2 className="text-2xl sm:text-4xl font-black text-slate-800 dark:text-white tracking-tight mb-2">
+            Target Company Modules
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm max-w-xl mx-auto font-medium leading-relaxed">
+            Practice real technical evaluation patterns, coding rounds, and behavioral expectations for top tier engineering firms.
+          </p>
+
+          {/* Ergonomic Search Input */}
+          <div className="mt-6 max-w-md mx-auto relative">
+            <div className="relative bg-white dark:bg-slate-900 rounded-2xl flex items-center shadow-sm border border-slate-200/80 dark:border-slate-800 px-3.5 h-11 transition-all focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-500/20">
+              <Search size={16} className="text-slate-400 mr-2.5 shrink-0" />
+              <input 
+                type="text" 
+                placeholder="Filter by company name (e.g. Google, Amazon, TCS)..." 
+                className="w-full bg-transparent border-none outline-none text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Grid Section */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-20">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        {/* Company Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
           {filteredCompanies.map((company, index) => (
             <button 
-              onClick={() => handleCompanyClick(company)} // 🔥 Requirement Updated: Uses New Function
+              onClick={() => handleCompanyClick(company)}
               key={index} 
               style={{ 
-                  opacity: loaded ? 1 : 0, 
-                  transform: loaded ? 'translateY(0)' : 'translateY(20px)',
-                  transition: `all 0.5s ease-out ${index * 0.05}s`
+                opacity: loaded ? 1 : 0, 
+                transform: loaded ? 'translateY(0)' : 'translateY(12px)',
+                transition: `all 0.3s ease-out ${Math.min(index * 0.02, 0.4)}s`
               }}
-              className={`text-left group relative bg-white rounded-[1.5rem] p-6 border border-slate-100/60 shadow-sm hover:shadow-2xl ${company.glow} transition-all duration-300 overflow-hidden flex flex-col h-[260px]`}
+              className={`text-left group relative bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-5 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-xl ${company.glow} transition-all duration-300 overflow-hidden flex flex-col justify-between h-[200px] active:scale-98`}
             >
-              <div className={`absolute -right-6 -top-6 w-32 h-32 bg-gradient-to-br ${company.gradient} opacity-10 rounded-full blur-2xl group-hover:opacity-20 transition-opacity duration-500`}></div>
+              {/* Subtle Ambient Background */}
+              <div className={`absolute -right-8 -top-8 w-24 h-24 bg-gradient-to-br ${company.gradient} opacity-10 dark:opacity-15 rounded-full blur-xl group-hover:scale-125 transition-all duration-500`} />
               
-              <div className="flex justify-between items-start relative z-10 mb-8 w-full">
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${company.gradient} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                    <i className={`${company.icon} text-2xl`}></i>
+              {/* Card Top */}
+              <div className="flex justify-between items-start relative z-10 w-full">
+                <div className={`w-11 h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br ${company.gradient} flex items-center justify-center text-white shadow-md font-bold text-sm group-hover:scale-105 transition-transform duration-200`}>
+                  {company.name.charAt(0)}
                 </div>
                 
-                <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-slate-100 bg-slate-50 text-slate-500 group-hover:bg-white group-hover:shadow-sm`}>
-                    {company.type}
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-slate-200/60 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                  {company.type}
                 </span>
               </div>
 
+              {/* Card Bottom */}
               <div className="relative z-10 mt-auto">
-                 <h3 className="text-2xl font-heading font-black text-slate-800 mb-2 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:${company.gradient} transition-colors">
-                    {company.name}
-                 </h3>
-                 <div className="h-1 w-12 bg-slate-100 rounded-full overflow-hidden">
-                    <div className={`h-full w-full bg-gradient-to-r ${company.gradient} transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500`}></div>
-                 </div>
-              </div>
-
-              <div className="relative z-10 pt-4 flex w-full items-center justify-between text-xs font-bold text-slate-400 mt-4">
-                 <span className="group-hover:text-slate-600 transition-colors">Updated 24h ago</span>
-                 <i className="fas fa-arrow-right transform opacity-0 -translate-x-2 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 text-slate-800"></i>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-1 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+                  {company.name}
+                </h3>
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-400 dark:text-slate-500">
+                  <span>Placement Rounds</span>
+                  <div className="flex items-center gap-1 text-teal-600 dark:text-teal-400 text-xs group-hover:translate-x-0.5 transition-transform">
+                    <span>Prepare</span>
+                    <ChevronRight size={13} />
+                  </div>
+                </div>
               </div>
             </button>
           ))}
         </div>
 
         {filteredCompanies.length === 0 && (
-          <div className="text-center py-24 opacity-60">
-            <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400 text-3xl">
-                <i className="fas fa-ghost"></i>
-            </div>
-            <h3 className="text-xl font-black text-slate-800">No results found</h3>
+          <div className="text-center py-20">
+            <Building2 size={40} className="text-slate-300 dark:text-slate-700 mx-auto mb-3" />
+            <h3 className="text-base font-bold text-slate-700 dark:text-slate-300 mb-1">No matching companies found</h3>
+            <p className="text-xs text-slate-400">Try searching for another company or clear your search filter.</p>
           </div>
         )}
       </div>
+
+      <MobileBottomNav />
     </div>
   );
 };

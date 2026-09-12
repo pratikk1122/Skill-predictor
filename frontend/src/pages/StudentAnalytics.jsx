@@ -270,10 +270,10 @@ ${performance.map(p => `• ${p.name}: ${p.score}%`).join('\n')}
         <Navbar />
 
         {/* Action Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <button 
             onClick={() => navigate(ROUTES.STUDENT_DASHBOARD)} 
-            className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-teal-400 transition-all shadow-sm active:scale-95"
+            className="flex items-center gap-2 h-10 px-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-teal-400 transition-all shadow-sm active:scale-95"
           >
             <ArrowLeft size={14} />
             <span>Dashboard</span>
@@ -283,15 +283,15 @@ ${performance.map(p => `• ${p.name}: ${p.score}%`).join('\n')}
              <button
                type="button"
                onClick={copyShareableSummary}
-               className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-2xl shadow-sm hover:border-teal-400 active:scale-95 transition-all"
+               className="flex items-center gap-2 h-10 px-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl shadow-sm hover:border-teal-400 active:scale-95 transition-all"
              >
                {copiedSummary ? <Check size={14} className="text-emerald-500" /> : <Share2 size={14} />}
-               <span>{copiedSummary ? "Copied to Clipboard!" : "Share Summary"}</span>
+               <span>{copiedSummary ? "Copied!" : "Share Summary"}</span>
              </button>
 
              <button
                onClick={downloadReport}
-               className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-2xl shadow-lg shadow-teal-600/20 active:scale-95 transition-all"
+               className="flex items-center gap-2 h-10 px-4 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold rounded-xl shadow-md shadow-teal-600/20 active:scale-95 transition-all"
              >
                <Download size={14} />
                <span>Export Certificate</span>

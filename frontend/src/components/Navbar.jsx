@@ -1,123 +1,235 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User, Mail, Lock, Camera, Trash2, ChevronDown, Menu } from 'lucide-react';
+import { 
+  User, Mail, Lock, Camera, Trash2, ChevronDown, 
+  LogOut, ShieldCheck, KeyRound, ExternalLink 
+} from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import ThemeToggle from './common/ThemeToggle';
+import ProfileModal from './common/ProfileModal';
+import ChangePasswordModal from '../pages/ChangePasswordModal';
+import api from '../services/api';
 
-const Navbar = ({ profileImage, setProfileImage, fileInputRef, studentName, studentEmail, onToggleSidebar }) => {
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+const Navbar = ({ 
+  profileImage, 
+  setProfileImage, 
+  studentName, 
+  studentEmail,
+  showBrandOnMobile = true 
+}) => {
+  const navigate = useNavigate();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const internalFileInputRef = useRef(null);
 
   // 🔄 Priority: Props > LocalStorage > Default
   const name = studentName || localStorage.getItem("userName") || "Student User";
   const email = studentEmail || localStorage.getItem("userEmail") || "student@skillpredictor.com";
+  const role = localStorage.getItem("role") || "student";
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsProfileOpen(false);
+        setIsDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (token) {
+        await api.post("/auth/logout", {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+    } catch {
+      // Ignore network errors on logout
+    } finally {
+      localStorage.clear();
+      setIsDropdownOpen(false);
+      navigate("/login");
+    }
+  };
+
+  const handleInternalImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (setProfileImage) setProfileImage(reader.result);
+        try {
+          localStorage.setItem("userProfileImage", reader.result);
+        } catch {
+          // Ignore quota error
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
-    <header className="flex justify-between md:justify-end items-center mb-3 sm:mb-8">
-      {/* Mobile Hamburger Menu */}
-      <button
-        type="button"
-        onClick={onToggleSidebar}
-        className="md:hidden flex items-center justify-center w-10 h-10 bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm text-slate-700 dark:text-slate-200 hover:border-teal-300 transition-all active:scale-95 backdrop-blur-md"
-        aria-label="Open menu"
-      >
-        <Menu size={20} className="text-teal-600 dark:text-teal-400" />
-      </button>
-
-      <div className="flex items-center gap-3 sm:gap-4">
-        {/* Modern Dark/Light Mode Toggle */}
-        <ThemeToggle />
-        
-        <div className="relative" ref={dropdownRef}>
-          <button 
-            onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex items-center gap-3 p-1.5 pr-4 bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl hover:border-teal-300 dark:hover:border-teal-500 transition-all shadow-sm active:scale-95 group backdrop-blur-md"
+    <>
+      <header className="flex justify-between items-center mb-3 sm:mb-8">
+        {/* Mobile Brand Mark (Replaces useless 3-lines hamburger menu) */}
+        {showBrandOnMobile ? (
+          <Link 
+            to="/student" 
+            className="md:hidden flex items-center gap-2 group"
           >
-            <div className="w-10 h-10 bg-teal-600 rounded-xl overflow-hidden flex items-center justify-center text-white font-bold shadow-md">
-              {profileImage ? (
-                <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                name.charAt(0).toUpperCase()
-              )}
+            <div className="w-8 h-8 bg-teal-600 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-md shadow-teal-600/20">
+              SP
             </div>
-            <div className="text-left hidden md:block">
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest leading-none mb-1">Student Account</p>
-              <p className="text-sm font-bold text-slate-700 dark:text-slate-200 leading-none">{name}</p>
-            </div>
-            <ChevronDown size={14} className={`text-slate-400 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
-          </button>
+            <span className="font-extrabold text-sm tracking-tight text-slate-800 dark:text-white">
+              Skill<span className="text-teal-600 dark:text-teal-400">Predictor</span>
+            </span>
+          </Link>
+        ) : (
+          <div className="md:hidden" />
+        )}
 
-          {/* Profile Dropdown */}
-          {isProfileOpen && (
-            <div className="absolute right-0 mt-3 w-72 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xl border border-slate-100 dark:border-slate-700 rounded-2xl shadow-2xl py-4 z-50 animate-in fade-in zoom-in-95 duration-150 origin-top-right border-t-4 border-t-teal-600">
-              <div className="px-5 pb-4 border-b border-slate-100 dark:border-slate-700/60">
-                <p className="text-xs text-slate-400 dark:text-slate-400 font-bold uppercase tracking-tighter mb-4">Account Details</p>
-                
-                <div className="space-y-4">
-                  {/* Real Name Section */}
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-teal-50 dark:bg-teal-950/60 rounded-lg">
-                      <User size={16} className="text-teal-600 dark:text-teal-400" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-400 font-bold uppercase">Full Name</p>
-                      <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{name}</p>
-                    </div>
-                  </div>
-
-                  {/* Real Email Section */}
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 dark:bg-blue-950/60 rounded-lg">
-                      <Mail size={16} className="text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div className="overflow-hidden">
-                      <p className="text-[10px] text-slate-400 dark:text-slate-400 font-bold uppercase">Email Address</p>
-                      <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">{email}</p>
-                    </div>
-                  </div>
-
-                  {/* Static Password Section */}
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-purple-50 dark:bg-purple-950/60 rounded-lg">
-                      <Lock size={16} className="text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-400 font-bold uppercase">Password</p>
-                      <p className="text-sm font-bold text-slate-700 dark:text-slate-200 tracking-widest">••••••••</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="px-2 pt-3">
-                <button 
-                  onClick={() => { fileInputRef.current.click(); setIsProfileOpen(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/60 rounded-xl transition-colors"
-                >
-                  <Camera size={17} className="text-slate-400" /> Change Profile Photo
-                </button>
-                {profileImage && (
-                  <button 
-                    onClick={() => { setProfileImage(null); setIsProfileOpen(false); }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition-colors"
-                  >
-                    <Trash2 size={17} /> Remove Photo
-                  </button>
+        {/* Action Controls: Theme Toggle & User Profile */}
+        <div className="flex items-center gap-2.5 sm:gap-4 ml-auto">
+          {/* Modern Dark/Light Mode Toggle */}
+          <ThemeToggle />
+          
+          {/* User Profile Pill & Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button 
+              type="button"
+              onClick={() => setIsDropdownOpen(prev => !prev)}
+              aria-label="User profile menu"
+              className="flex items-center gap-2.5 sm:gap-3 p-1 sm:p-1.5 pr-2.5 sm:pr-4 bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl hover:border-teal-400 dark:hover:border-teal-500 transition-all shadow-sm active:scale-95 group backdrop-blur-md"
+            >
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-teal-600 rounded-xl overflow-hidden flex items-center justify-center text-white font-bold text-xs sm:text-sm shadow-md">
+                {profileImage ? (
+                  <img src={profileImage} alt={name} className="w-full h-full object-cover" />
+                ) : (
+                  name.charAt(0).toUpperCase()
                 )}
               </div>
-            </div>
-          )}
+              <div className="text-left hidden sm:block">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1">
+                  {role === "admin" ? "Administrator" : "Student"}
+                </p>
+                <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 leading-none truncate max-w-[130px]">
+                  {name}
+                </p>
+              </div>
+              <ChevronDown 
+                size={14} 
+                className={`text-slate-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-teal-600' : ''}`} 
+              />
+            </button>
+
+            {/* Profile Dropdown Menu */}
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-3 w-72 sm:w-80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-2xl py-3 z-50 animate-in fade-in zoom-in-95 duration-150 origin-top-right border-t-4 border-t-teal-600">
+                {/* Header Summary */}
+                <div className="px-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-sm font-bold text-slate-800 dark:text-white capitalize truncate">{name}</p>
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 px-2 py-0.5 rounded-md border border-teal-200 dark:border-teal-800">
+                      {role === "admin" ? "Admin" : "Student"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 dark:text-slate-400 truncate">{email}</p>
+                </div>
+
+                {/* Primary Action: View Full Profile */}
+                <div className="px-2 py-2 border-b border-slate-100 dark:border-slate-800">
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setIsProfileModalOpen(true);
+                      setIsDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between px-3.5 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-teal-50 dark:hover:bg-teal-950/40 hover:text-teal-700 dark:hover:text-teal-300 rounded-xl transition-all group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-teal-100/80 dark:bg-teal-900/50 flex items-center justify-center text-teal-600 dark:text-teal-400 group-hover:scale-105 transition-transform">
+                        <User size={14} />
+                      </div>
+                      <span>View My Profile</span>
+                    </div>
+                    <ExternalLink size={13} className="text-slate-400 group-hover:text-teal-600 transition-colors" />
+                  </button>
+
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setIsPasswordModalOpen(true);
+                      setIsDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                      <KeyRound size={14} />
+                    </div>
+                    <span>Change Password</span>
+                  </button>
+
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      internalFileInputRef.current?.click();
+                      setIsDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                      <Camera size={14} />
+                    </div>
+                    <span>Update Profile Photo</span>
+                  </button>
+                </div>
+
+                {/* Logout Action */}
+                <div className="px-2 pt-2">
+                  <button 
+                    type="button"
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-all group"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-rose-100/70 dark:bg-rose-900/40 flex items-center justify-center text-rose-600 dark:text-rose-400 group-hover:scale-105 transition-transform">
+                      <LogOut size={14} />
+                    </div>
+                    <span>Log Out Session</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </header>
+
+        {/* Hidden File Picker */}
+        <input 
+          type="file" 
+          ref={internalFileInputRef} 
+          onChange={handleInternalImageChange} 
+          className="hidden" 
+          accept="image/*" 
+        />
+      </header>
+
+      {/* Full Profile Modal */}
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        studentName={name}
+        studentEmail={email}
+        profileImage={profileImage}
+        setProfileImage={setProfileImage}
+      />
+
+      {/* Change Password Modal */}
+      {isPasswordModalOpen && (
+        <ChangePasswordModal onClose={() => setIsPasswordModalOpen(false)} />
+      )}
+    </>
   );
 };
 
