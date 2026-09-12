@@ -14,7 +14,7 @@ import {
   Headphones, History, KeyRound, LogOut, Bell, Shield, 
   CheckCircle2, Clock, AlertTriangle, Search, FileText, 
   Brain, Video, Award, Check, X, Camera, ChevronDown, 
-  Filter, Sparkles, UserCheck, UserX, HelpCircle
+  Filter, Sparkles, UserCheck, UserX, HelpCircle, Menu
 } from 'lucide-react';
 
 /* ================= ADMIN INITIALS MAP ================= */
@@ -34,6 +34,7 @@ const AdminDashboard = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profilePic, setProfilePic] = useState(null);
   const [isChartReady, setIsChartReady] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Notifications state
   const [notifications, setNotifications] = useState([]);
@@ -218,18 +219,43 @@ const AdminDashboard = () => {
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300 overflow-hidden">
       
+      {/* Mobile Backdrop */}
+      {isMobileSidebarOpen && (
+        <div 
+          onClick={() => setIsMobileSidebarOpen(false)} 
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 md:hidden transition-opacity" 
+        />
+      )}
+
       {/* SIDEBAR */}
-      <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 flex flex-col p-5 overflow-y-auto shrink-0 shadow-sm">
-        <div className="flex items-center gap-3 mb-8 px-2">
-          <div className="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-teal-600/20">
-            <Shield size={20} />
+      <aside className={`
+        fixed md:static inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-900 
+        border-r border-slate-200/80 dark:border-slate-800 flex flex-col p-5 
+        overflow-y-auto shrink-0 shadow-2xl md:shadow-sm 
+        transform transition-transform duration-300 ease-in-out
+        ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
+        <div className="flex items-center justify-between mb-8 px-2">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-teal-600/20">
+              <Shield size={20} />
+            </div>
+            <div>
+              <span className="text-lg font-black tracking-tight text-slate-800 dark:text-white leading-none">
+                Admin<span className="text-teal-600 dark:text-teal-400">Portal</span>
+              </span>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Management Suite</p>
+            </div>
           </div>
-          <div>
-            <span className="text-lg font-black tracking-tight text-slate-800 dark:text-white leading-none">
-              Admin<span className="text-teal-600 dark:text-teal-400">Portal</span>
-            </span>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Management Suite</p>
-          </div>
+
+          {/* Close button visible only on mobile */}
+          <button 
+            onClick={() => setIsMobileSidebarOpen(false)}
+            className="md:hidden p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            aria-label="Close sidebar"
+          >
+            <X size={18} />
+          </button>
         </div>
 
         <nav className="flex-1 space-y-1">
@@ -239,45 +265,45 @@ const AdminDashboard = () => {
             icon={LayoutDashboard} 
             label="Overview" 
             active={placementTab === "overview"} 
-            onClick={() => setPlacementTab("overview")} 
+            onClick={() => { setPlacementTab("overview"); setIsMobileSidebarOpen(false); }} 
           />
           <SidebarItem 
             icon={Users} 
             label="Students" 
-            onClick={() => navigate(ROUTES.ADMIN_STUDENTS)} 
+            onClick={() => { navigate(ROUTES.ADMIN_STUDENTS); setIsMobileSidebarOpen(false); }} 
           />
           <SidebarItem
             icon={Building2}
             label="Companies"
-            onClick={() => navigate(ROUTES.ADMIN_COMPANIES)}
+            onClick={() => { navigate(ROUTES.ADMIN_COMPANIES); setIsMobileSidebarOpen(false); }} 
           />
           <SidebarItem
             icon={Bot}
             label="AI Interviews"
-            onClick={() => navigate("/admin/interviews")}
+            onClick={() => { navigate("/admin/interviews"); setIsMobileSidebarOpen(false); }} 
           />
           <SidebarItem 
             icon={TrendingUp} 
             label="Placement Tracking" 
             active={placementTab === "tracking"}
-            onClick={() => setPlacementTab("tracking")}
+            onClick={() => { setPlacementTab("tracking"); setIsMobileSidebarOpen(false); }} 
           />
           <SidebarItem 
             icon={Headphones} 
             label="Helpdesk" 
-            onClick={() => navigate("/admin/helpdesk")} 
+            onClick={() => { navigate("/admin/helpdesk"); setIsMobileSidebarOpen(false); }} 
           />
 
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-6 mb-3 px-2">System & Security</p>
           <SidebarItem 
             icon={History} 
             label="Activity Logs" 
-            onClick={() => navigate("/admin/activity-logs")} 
+            onClick={() => { navigate("/admin/activity-logs"); setIsMobileSidebarOpen(false); }} 
           />
           <SidebarItem 
             icon={KeyRound} 
             label="Change Password" 
-            onClick={() => setShowChangePassword(true)} 
+            onClick={() => { setShowChangePassword(true); setIsMobileSidebarOpen(false); }} 
           />
         </nav>
 
@@ -292,15 +318,25 @@ const AdminDashboard = () => {
 
       {/* MAIN CONTENT */}
       <main className="flex-1 overflow-y-auto">
-        <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 h-18 sm:h-20 flex items-center justify-between px-6 sm:px-8 sticky top-0 z-40">
-          <div>
-            <h2 className="text-lg sm:text-xl font-black text-slate-800 dark:text-white tracking-tight">
-              {placementTab === "overview" ? "Executive Dashboard" : "Placement Tracking Intelligence"}
-            </h2>
-            <p className="text-xs text-slate-400 font-medium">Real-time candidate metrics, interviews, and application ledgers</p>
+        <header className="bg-white/85 dark:bg-slate-900/85 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 h-16 sm:h-20 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-30">
+          <div className="flex items-center gap-2.5 min-w-0">
+            {/* Mobile Hamburger Drawer Trigger */}
+            <button
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="md:hidden p-2 -ml-1 text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors shrink-0"
+              aria-label="Open Admin Menu"
+            >
+              <Menu size={20} />
+            </button>
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-xl font-black text-slate-800 dark:text-white tracking-tight truncate max-w-[150px] sm:max-w-none">
+                {placementTab === "overview" ? "Executive Dashboard" : "Placement Tracking"}
+              </h2>
+              <p className="hidden sm:block text-xs text-slate-400 font-medium truncate">Real-time candidate metrics, interviews, and application ledgers</p>
+            </div>
           </div>
           
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             
             {/* Theme Toggle */}
             <ThemeToggle />
@@ -309,10 +345,10 @@ const AdminDashboard = () => {
             <div className="relative">
               <button 
                 onClick={() => setIsNotifOpen(!isNotifOpen)}
-                className="relative p-2 text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 transition-all bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm active:scale-95"
+                className="relative p-2 text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 transition-all bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs active:scale-95"
                 aria-label="View notifications"
               >
-                <Bell size={18} />
+                <Bell size={17} />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center animate-pulse">
                     {unreadCount}
@@ -377,7 +413,7 @@ const AdminDashboard = () => {
             <div className="relative">
               <div 
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center gap-2.5 bg-white dark:bg-slate-800 p-1 pl-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:border-teal-400 transition-all"
+                className="flex items-center gap-1.5 sm:gap-2.5 bg-white dark:bg-slate-800 p-1 pl-2 sm:pl-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xs cursor-pointer hover:border-teal-400 transition-all"
               >
                 <div className="text-right hidden sm:block">
                   <p className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-none mb-0.5 truncate max-w-[120px]">{adminEmail}</p>
@@ -386,7 +422,7 @@ const AdminDashboard = () => {
                   </span>
                 </div>
 
-                <div className="w-8 h-8 bg-teal-600 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-sm overflow-hidden">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-teal-600 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-xs overflow-hidden shrink-0">
                   {profilePic ? (
                     <img src={profilePic} alt="Admin" className="w-full h-full object-cover" />
                   ) : adminInitials}

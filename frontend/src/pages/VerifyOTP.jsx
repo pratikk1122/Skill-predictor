@@ -8,7 +8,7 @@ const VerifyOTP = () => {
   const navigate = useNavigate();
 
   // Location state se signup/login ka data nikalna
-  const { email, password, mode, firstName, surName, mobile, otpSent } = location.state || {};
+  const { email, password, mode, firstName, surName, mobile, otpSent, infoMessage } = location.state || {};
   const [emailValue, setEmailValue] = useState("");
   const [otp, setOtp] = useState(new Array(6).fill(""));
   const [message, setMessage] = useState("");
@@ -32,11 +32,11 @@ const VerifyOTP = () => {
       setOtpLoading(true);
       const res = await api.post("/auth/send-otp", { email: toEmail.toLowerCase() });
       setTimer(30);
-      setMessage("Success: Verification code sent strictly to your email inbox.");
+      setMessage(res.data?.message || "Verification code sent strictly to your email inbox.");
     } catch (err) {
       const msg = err.response?.data?.message;
       if (msg?.includes("wait")) setTimer(30);
-      setMessage(msg || "Error: Failed to send verification code. Please check your email address.");
+      setMessage(msg || "Failed to send verification code. Please check your email address.");
     } finally {
       setOtpLoading(false);
     }
@@ -51,7 +51,7 @@ const VerifyOTP = () => {
         if (otpSent) {
           // Code already sent via loginWithPassword
           setTimer(30);
-          setMessage("Success: Verification code sent strictly to your email inbox.");
+          setMessage(infoMessage || "Verification code sent strictly to your email inbox.");
         } else {
           handleSendOtp(normalized);
         }
@@ -59,7 +59,7 @@ const VerifyOTP = () => {
     } else {
       navigate(ROUTES.LOGIN);
     }
-  }, [email, navigate, otpSent]);
+  }, [email, navigate, otpSent, infoMessage]);
 
   useEffect(() => {
     let interval;

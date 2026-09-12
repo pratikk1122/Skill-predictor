@@ -81,7 +81,8 @@ const Login = () => {
             mode: "login",
             firstName: response.data.user?.firstName,
             surName: response.data.user?.surName,
-            otpSent: true
+            otpSent: true,
+            infoMessage: response.data.message
           } 
         });
         return;

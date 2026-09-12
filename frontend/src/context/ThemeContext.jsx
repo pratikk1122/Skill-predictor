@@ -20,7 +20,19 @@ export const ThemeProvider = ({ children }) => {
     return 'light'; // Default clean light mode
   });
 
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    try {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') return true;
+      if (savedTheme === 'light') return false;
+      if (typeof window !== 'undefined' && window.matchMedia) {
+        return window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+    } catch {
+      // ignore
+    }
+    return false;
+  });
 
   useEffect(() => {
     const root = document.documentElement;

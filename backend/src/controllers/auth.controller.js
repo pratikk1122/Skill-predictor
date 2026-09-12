@@ -186,40 +186,13 @@ exports.loginWithPassword = async (req, res) => {
 
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    // Generate 6-digit OTP for login email verification
-    const otp = generateOTP();
-    user.otp = await bcrypt.hash(otp, 10);
-    user.otpExpires = Date.now() + 5 * 60 * 1000;
-    user.otpSentAt = new Date();
-    if (isAdminEmail) user.role = "admin";
-    await user.save();
-
-    const sendResult = await sendOtp(email, otp);
-
-    if (sendResult.success) {
-      return res.json({ 
-        requireOtp: true, 
-        message: "A 6-digit verification code has been sent to your email inbox.",
-        user: {
-          _id: user._id,
-          id: user._id,
-          firstName: user.firstName,
-          surName: user.surName,
-          email: user.email,
-          role: user.role
-        }
-      });
-    }
-
-    // 🛡️ FAIL-SAFE: If Render cloud host blocked outbound SMTP traffic:
-    console.warn(`⚠️ SMTP delivery failed on cloud server for ${email}: ${sendResult.error}`);
-
+    // 🚀 OFFICIAL ADMIN DIRECT LOGIN (NO OTP WAITING FOR ADMINS)
     if (isAdminEmail) {
-      // Direct login for verified Admin - never lock the administrator out!
       user.lastLoginAt = new Date();
       user.lastOtpVerifiedAt = new Date();
       user.isVerified = true;
       user.activeSessionId = uuidv4();
+      user.role = "admin";
       await user.save();
 
       const token = jwt.sign(
@@ -244,10 +217,64 @@ exports.loginWithPassword = async (req, res) => {
       });
     }
 
-    // For students: Return requireOtp with the code in message so they can verify without getting blocked
+    // 🎓 STUDENT FLOW:
+    // If account is already verified and does not force OTP, log in directly!
+    if (user.isVerified && !user.forceOtpOnNextLogin) {
+      user.lastLoginAt = new Date();
+      user.activeSessionId = uuidv4();
+      await user.save();
+
+      const token = jwt.sign(
+        { id: user._id, email: user.email, role: user.role || "student", sessionId: user.activeSessionId },
+        process.env.JWT_SECRET || "skill_predictor_super_secret_key",
+        { expiresIn: "30d" }
+      );
+
+      return res.json({
+        token,
+        role: user.role || "student",
+        user: {
+          _id: user._id,
+          id: user._id,
+          firstName: user.firstName || "Student",
+          surName: user.surName || "",
+          name: user.firstName ? `${user.firstName} ${user.surName || ''}`.trim() : (user.name || "Student User"),
+          email: user.email,
+          education: user.education,
+          role: user.role || "student"
+        },
+        message: "Login successful"
+      });
+    }
+
+    // Otherwise (unverified accounts), generate 6-digit OTP for email verification
+    const otp = generateOTP();
+    user.otp = await bcrypt.hash(otp, 10);
+    user.otpExpires = Date.now() + 5 * 60 * 1000;
+    user.otpSentAt = new Date();
+    await user.save();
+
+    const sendResult = await sendOtp(email, otp);
+
+    if (sendResult.success) {
+      return res.json({ 
+        requireOtp: true, 
+        message: "A 6-digit verification code has been sent to your email inbox.",
+        user: {
+          _id: user._id,
+          id: user._id,
+          firstName: user.firstName,
+          surName: user.surName,
+          email: user.email,
+          role: user.role
+        }
+      });
+    }
+
+    // If cloud SMTP is blocked, provide the code directly in the response so student is never stuck
     return res.json({ 
       requireOtp: true, 
-      message: `Email gateway delayed by network. Verification code: ${otp}`,
+      message: `Verification code: ${otp}`,
       user: {
         _id: user._id,
         id: user._id,
