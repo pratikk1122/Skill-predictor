@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import api from '../services/api';
+import { ChartSkeleton } from '../components/common/Skeleton';
+import PrivacyBadge from '../components/common/PrivacyBadge';
 
 const SkillDashboard = () => {
   const navigate = useNavigate(); // 🔥 Added to handle navigation safely
@@ -32,31 +34,30 @@ const SkillDashboard = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F1F5F9] p-8 font-sans">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-8 font-sans transition-colors duration-300">
       <div className="max-w-5xl mx-auto">
         
         {/* Header */}
-        <div className="flex items-center gap-4 mb-10">
-          {/* 🔥 FIXED: Now explicitly routes back to Company Prep */}
+        <div className="flex items-center gap-4 mb-8">
           <button 
             onClick={() => navigate('/company-prep')} 
-            className="w-11 h-11 bg-white rounded-full shadow-sm flex items-center justify-center text-slate-500 hover:text-[#5cbdb9] transition-all border border-slate-100"
+            className="w-11 h-11 bg-white dark:bg-slate-800 rounded-2xl shadow-sm flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 transition-all border border-slate-200 dark:border-slate-700 active:scale-95"
           >
             <i className="fas fa-arrow-left"></i>
           </button>
           <div>
-            <h1 className="text-3xl font-black text-slate-800 tracking-tight">
-              Skill <span className="text-[#5cbdb9]">Radar</span>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
+              Skill <span className="text-teal-600 dark:text-teal-400">Radar</span>
             </h1>
-            <p className="text-sm font-medium text-slate-400 mt-1">Your real-time aptitude performance across top tech giants.</p>
+            <p className="text-xs sm:text-sm font-medium text-slate-400 dark:text-slate-400 mt-0.5">Your real-time aptitude performance across top tech giants.</p>
           </div>
         </div>
 
         {/* Dashboard Content */}
-        <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-slate-100">
+        <div className="bg-white dark:bg-slate-900/90 backdrop-blur-md p-6 sm:p-10 rounded-[2.5rem] shadow-sm border border-slate-200/80 dark:border-slate-800">
           {loading ? (
-            <div className="flex justify-center items-center py-32">
-              <div className="w-12 h-12 border-4 border-[#5cbdb9]/30 border-t-[#5cbdb9] rounded-full animate-spin"></div>
+            <div className="py-8">
+              <ChartSkeleton height="h-[380px]" />
             </div>
           ) : statsData.length === 0 ? (
             <div className="text-center py-32">

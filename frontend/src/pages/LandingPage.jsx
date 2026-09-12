@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from "../services/api"; 
 import bgVideo from '../assets/bg.mp4'; 
+import ThemeToggle from "../components/common/ThemeToggle";
+import PrivacyBadge from "../components/common/PrivacyBadge"; 
 
 // --- Counter & Helper Components ---
 const Counter = ({ target, duration = 2000 }) => {
@@ -227,7 +229,8 @@ const LandingPage = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <ThemeToggle />
             {isLoggedIn ? (
               <Link 
                 to={dashboardRoute} 
@@ -577,8 +580,9 @@ const LandingPage = () => {
                 </ul>
             </div>
           </div>
-          <div className="pt-10 border-t border-slate-50 text-center">
-            <p className="text-text-light text-xs font-bold uppercase tracking-widest">&copy; 2025 SkillPredictor. Built with Passion.</p>
+          <div className="pt-10 border-t border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center gap-4 text-center">
+            <PrivacyBadge />
+            <p className="text-text-light text-xs font-bold uppercase tracking-widest">&copy; {new Date().getFullYear()} SkillPredictor. Built with Passion & Integrity.</p>
           </div>
         </div>
       </footer>

@@ -19,8 +19,12 @@ import {
   Building2,
   Users,
   Lightbulb,
-  AlertCircle
+  AlertCircle,
+  Share2,
+  Check
 } from "lucide-react";
+import { ChartSkeleton, Skeleton } from "../components/common/Skeleton";
+import PrivacyBadge from "../components/common/PrivacyBadge";
 import {
   RadarChart,
   Radar,
@@ -227,45 +231,96 @@ const StudentAnalytics = () => {
     }
   };
 
-  if (loading) return (
-    <div className="flex h-screen items-center justify-center bg-teeny-greeny">
-      <div className="flex flex-col items-center gap-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-greeny border-r-transparent"></div>
-        <p className="text-[10px] font-black uppercase tracking-widest text-blue-greeny animate-pulse">Syncing Skill DNA...</p>
-      </div>
-    </div>
-  );
+  const [copiedSummary, setCopiedSummary] = useState(false);
+
+  const copyShareableSummary = async () => {
+    const studentName = storedUser.name || "Student Candidate";
+    const summaryText = `📊 **SkillPredictor Career Readiness Audit**
+👤 **Candidate:** ${studentName}
+
+🎯 **Placement Readiness Domains:**
+${performance.map(p => `• ${p.name}: ${p.score}%`).join('\n')}
+
+📈 **Assessment Activity:**
+• Resume Scans: ${detailedCounts.resumeScans}
+• Mock Interviews: ${detailedCounts.mockInterviews}
+• Aptitude Tests: ${detailedCounts.aptitudeTests}
+• Company Modules: ${detailedCounts.companyPrepTests}
+• GD Sessions: ${detailedCounts.gdParticipations}
+
+💡 **AI Recommended Career:** ${career.recommendedCareer || "Calculating..."}
+"${insight || "Continue regular module practice to optimize placement readiness."}"
+
+🔒 Verified via SkillPredictor AI Telemetry`;
+
+    try {
+      await navigator.clipboard.writeText(summaryText);
+      setCopiedSummary(true);
+      setTimeout(() => setCopiedSummary(false), 2500);
+    } catch {
+      alert("Failed to copy summary to clipboard.");
+    }
+  };
 
   return (
-    <div className="flex h-screen bg-teeny-greeny text-text-dark font-sans selection:bg-blue-greeny/20">
+    <div className="flex h-screen bg-slate-50/80 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans selection:bg-teal-500/20 transition-colors duration-300">
       <Sidebar />
 
-      <main className="flex-1 overflow-y-auto p-6 lg:p-10 pb-28 md:pb-10 scroll-smooth">
+      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-10 pb-28 md:pb-10 scroll-smooth">
         <Navbar />
 
         {/* Action Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <button 
             onClick={() => navigate(ROUTES.STUDENT_DASHBOARD)} 
-            className="flex items-center gap-2 px-6 py-3 bg-white border border-blue-greeny/10 rounded-2xl text-[11px] font-black text-blue-greeny hover:bg-blue-greeny hover:text-white transition-all shadow-sm active:scale-95"
+            className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-teal-400 transition-all shadow-sm active:scale-95"
           >
             <ArrowLeft size={14} />
-            BACK TO DASHBOARD
+            <span>Dashboard</span>
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+             <button
+               type="button"
+               onClick={copyShareableSummary}
+               className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-2xl shadow-sm hover:border-teal-400 active:scale-95 transition-all"
+             >
+               {copiedSummary ? <Check size={14} className="text-emerald-500" /> : <Share2 size={14} />}
+               <span>{copiedSummary ? "Copied to Clipboard!" : "Share Summary"}</span>
+             </button>
+
              <button
                onClick={downloadReport}
-               className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-black rounded-2xl uppercase tracking-wider shadow-lg shadow-teal-600/20 active:scale-95 transition-all"
+               className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-2xl shadow-lg shadow-teal-600/20 active:scale-95 transition-all"
              >
                <Download size={14} />
-               DOWNLOAD CERTIFICATE
+               <span>Export Certificate</span>
              </button>
-             <span className="hidden sm:inline-block px-5 py-2.5 bg-slate-900 text-white text-[10px] font-black rounded-2xl uppercase tracking-[0.2em] border border-slate-800 shadow-xl">
-               Personal Analytics Engine
-             </span>
           </div>
         </div>
+
+        {loading ? (
+          <div className="space-y-8 animate-in fade-in duration-300">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="bg-white dark:bg-slate-900/80 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-3 flex flex-col items-center">
+                  <Skeleton className="w-12 h-12 rounded-2xl" />
+                  <Skeleton className="h-6 w-16" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+              ))}
+            </div>
+            <div className="grid lg:grid-cols-12 gap-8">
+              <div className="lg:col-span-8">
+                <ChartSkeleton height="h-[380px]" />
+              </div>
+              <div className="lg:col-span-4">
+                <ChartSkeleton height="h-[380px]" />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
 
         {/* Title Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
@@ -382,6 +437,13 @@ const StudentAnalytics = () => {
             </div>
           </div>
         </div>
+
+        {/* Transparent Privacy & Data Security Badge Footer */}
+        <div className="flex justify-center pt-8 pb-10">
+          <PrivacyBadge />
+        </div>
+        </>
+        )}
       </main>
 
       {/* 📱 Mobile App Bottom Navigation Bar */}

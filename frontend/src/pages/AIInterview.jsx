@@ -3,6 +3,9 @@ import api from "../services/api";
 import { jsPDF } from "jspdf";
 import { useNavigate } from "react-router-dom";
 import MobileBottomNav from "../components/MobileBottomNav";
+import useCooldown from "../hooks/useCooldown";
+import PrivacyBadge from "../components/common/PrivacyBadge";
+import BoundedInput from "../components/common/BoundedInput";
 import {
   UploadCloud,
   Loader2,
@@ -14,11 +17,14 @@ import {
   Award,
   CheckCircle2,
   Download,
-  Zap
+  Zap,
+  Share2,
+  Check
 } from "lucide-react";
 
 const AIInterview = () => {
   const navigate = useNavigate();
+  const { isCoolingDown, trigger: triggerWithCooldown } = useCooldown(1500);
 
   const [file, setFile] = useState(null);
   const [difficulty, setDifficulty] = useState("medium"); // Added for Difficulty logic
@@ -340,9 +346,9 @@ const AIInterview = () => {
             </div>
 
             <button
-              onClick={handleStartInterview}
-              disabled={loading}
-              className="w-full max-w-sm bg-blue-greeny text-white px-8 py-5 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-blue-greeny-dark transition-all shadow-xl shadow-blue-greeny/20 flex items-center justify-center gap-3 disabled:opacity-50"
+              onClick={triggerWithCooldown(handleStartInterview)}
+              disabled={loading || isCoolingDown}
+              className="w-full max-w-sm bg-teal-600 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-teal-700 transition-all shadow-xl shadow-teal-600/20 flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95"
             >
               {loading ? (
                 <>
@@ -358,68 +364,83 @@ const AIInterview = () => {
           </div>
         ) : (
           <div className="animate-in fade-in duration-500">
-            <div className="flex items-center justify-between mb-10">
-                <h2 className="text-xl font-heading font-black uppercase tracking-tight border-l-4 border-blue-greeny pl-3">
+            <div className="flex items-center justify-between mb-8">
+                <h2 className="text-xl font-heading font-black uppercase tracking-tight border-l-4 border-teal-600 pl-3">
                   Live Session
                 </h2>
-                <div className="flex items-center gap-2 px-4 py-2 bg-red-50 rounded-full border border-red-100">
-                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                    <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">Recording</span>
+                <div className="flex items-center gap-2 px-4 py-1.5 bg-rose-50 dark:bg-rose-950/40 rounded-full border border-rose-100 dark:border-rose-900/50">
+                    <span className="w-2 h-2 bg-rose-500 rounded-full animate-pulse"></span>
+                    <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest">
+                      {listening ? "Recording Active" : "Microphone Ready"}
+                    </span>
                 </div>
             </div>
 
-            <div className="bg-teeny-greeny/50 p-8 rounded-[2rem] mb-10 border border-blue-greeny/10 flex justify-between items-start gap-6 shadow-inner relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                  <Volume2 size={80} className="text-blue-greeny" />
-              </div>
-              <p className="text-xl font-bold text-text-dark leading-relaxed relative z-10">
+            <div className="bg-slate-50 dark:bg-slate-800/60 p-6 sm:p-8 rounded-[2rem] mb-8 border border-slate-200/80 dark:border-slate-700/80 flex justify-between items-start gap-4 shadow-inner relative overflow-hidden group">
+              <p className="text-base sm:text-xl font-bold text-slate-800 dark:text-slate-100 leading-relaxed relative z-10">
                   {currentQuestion}
               </p>
               <button 
+                type="button"
                 onClick={() => speakQuestion(currentQuestion)}
-                className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-greeny shadow-sm hover:shadow-md transition-all relative z-10 shrink-0"
+                title="Replay Audio Question"
+                className="w-11 h-11 bg-white dark:bg-slate-700 rounded-2xl flex items-center justify-center text-teal-600 dark:text-teal-400 shadow-sm hover:shadow-md transition-all relative z-10 shrink-0 active:scale-95"
               >
-                <Volume2 size={24} />
+                <Volume2 size={22} />
               </button>
             </div>
 
-            <div className="relative mb-10">
-                <p className="text-[10px] font-black text-text-light uppercase tracking-widest mb-3 ml-2">Type or Speak your response</p>
-                <textarea
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
+            <div className="mb-8">
+                <BoundedInput
+                  id="interview-answer-input"
+                  as="textarea"
+                  rows={5}
+                  label="Your Response (Spoken or Typed)"
                   placeholder="Analyze the question and provide your structured response here..."
-                  className="w-full h-56 bg-slate-50 border-none rounded-[2rem] p-8 text-text-dark font-medium focus:ring-2 focus:ring-blue-greeny/20 outline-none transition-all resize-none shadow-inner"
+                  value={answer}
+                  onChange={(val) => setAnswer(val)}
+                  maxChars={1200}
+                  minChars={10}
+                  maxWords={200}
+                  helperText="Speak via microphone or type your answer."
                 />
             </div>
 
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               {!listening ? (
                 <button
+                  type="button"
                   onClick={startListening}
-                  className="flex-1 bg-white border border-blue-greeny/30 text-blue-greeny px-8 py-5 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-blue-greeny/5 transition-all"
+                  className="flex-1 bg-white dark:bg-slate-800 border border-teal-500/30 text-teal-700 dark:text-teal-300 px-6 py-4 rounded-2xl font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-3 hover:bg-teal-50 dark:hover:bg-slate-700/60 transition-all active:scale-95 shadow-sm"
                 >
-                  <Mic size={20} /> Start Dictation
+                  <Mic size={18} /> Start Voice Dictation
                 </button>
               ) : (
                 <button
+                  type="button"
                   onClick={stopListening}
-                  className="flex-1 bg-red-500 text-white px-8 py-5 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 animate-pulse transition-all shadow-lg shadow-red-200"
+                  className="flex-1 bg-rose-600 text-white px-6 py-4 rounded-2xl font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-3 animate-pulse transition-all shadow-lg shadow-rose-200 dark:shadow-none active:scale-95"
                 >
-                  <MicOff size={20} /> Stop Dictation
+                  <MicOff size={18} /> Stop Dictation
                 </button>
               )}
 
               <button
-                onClick={handleSubmitAnswer}
-                disabled={loading}
-                className="flex-1 bg-blue-greeny text-white px-8 py-5 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-blue-greeny-dark transition-all shadow-xl shadow-blue-greeny/20 disabled:opacity-50"
+                type="button"
+                onClick={triggerWithCooldown(handleSubmitAnswer)}
+                disabled={loading || isCoolingDown}
+                className="flex-1 bg-teal-600 hover:bg-teal-700 text-white px-6 py-4 rounded-2xl font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-3 transition-all shadow-xl shadow-teal-600/20 disabled:opacity-50 active:scale-95"
               >
-                {loading ? <Loader2 className="animate-spin" size={20} /> : "SUBMIT RESPONSE"}
+                {loading ? <Loader2 className="animate-spin" size={18} /> : "SUBMIT RESPONSE"}
               </button>
             </div>
           </div>
         )}
+
+        {/* Transparent Privacy & Data Security Badge */}
+        <div className="flex justify-center mt-10">
+          <PrivacyBadge />
+        </div>
       </div>
 
       {/* 📱 Mobile Bottom Navigation Bar */}

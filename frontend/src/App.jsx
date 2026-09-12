@@ -41,10 +41,16 @@ import SkillDashboard from "./pages/SkillDashboard";
 import CompanyPrep from "./pages/CompanyPrep";
 import CompanyQuestionPage from "./pages/CompanyQuestionPage";
 
+// 🔥 THEME & ERROR SAFETY
+import { ThemeProvider } from "./context/ThemeContext";
+import ErrorBoundary from "./components/common/ErrorBoundary";
+
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <ThemeProvider>
+      <ErrorBoundary>
+        <BrowserRouter>
+          <Routes>
 
         {/* ================= PUBLIC ROUTES ================= */}
         <Route path={ROUTES.HOME} element={<LandingPage />} />
@@ -239,7 +245,9 @@ function App() {
         <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
 
       </Routes>
-    </BrowserRouter>
+        </BrowserRouter>
+      </ErrorBoundary>
+    </ThemeProvider>
   );
 }
 
