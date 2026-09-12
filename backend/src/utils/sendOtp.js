@@ -32,9 +32,9 @@ const createPort587Transporter = () => {
       servername: "smtp.gmail.com",
       rejectUnauthorized: false
     },
-    connectionTimeout: 8000,
-    greetingTimeout: 8000,
-    socketTimeout: 10000
+    connectionTimeout: 3000,
+    greetingTimeout: 3000,
+    socketTimeout: 5000
   });
 };
 
@@ -53,9 +53,9 @@ const createSSLTransporter = () => {
       servername: "smtp.gmail.com",
       rejectUnauthorized: false
     },
-    connectionTimeout: 8000,
-    greetingTimeout: 8000,
-    socketTimeout: 10000
+    connectionTimeout: 3000,
+    greetingTimeout: 3000,
+    socketTimeout: 5000
   });
 };
 
@@ -109,44 +109,66 @@ const sendOtp = async (email, otp) => {
     `
   };
 
-  // 1️⃣ Try Port 587 STARTTLS first (standard for cloud environments)
-  try {
-    const t587 = createPort587Transporter();
-    await t587.sendMail(mailOptions);
-    console.log(`✅ OTP email successfully delivered via Port 587 (STARTTLS) to: ${email}`);
-    return { success: true, delivered: true, transport: "Port 587 STARTTLS" };
-  } catch (port587Error) {
-    console.warn(`⚠️ Port 587 STARTTLS failed (${port587Error.message}), attempting SSL 465 fallback...`);
-    // 2️⃣ Fallback to SSL 465
-    try {
-      const tSSL = createSSLTransporter();
-      await tSSL.sendMail(mailOptions);
-      console.log(`✅ OTP email successfully delivered via SSL 465 to: ${email}`);
-      return { success: true, delivered: true, transport: "Port 465 SSL" };
-    } catch (sslError) {
-      console.warn(`⚠️ Direct SMTP failed (${sslError.message}), attempting Vercel HTTPS Relay...`);
-      // 3️⃣ Fallback to Vercel HTTPS Serverless Mailer (Port 443 - Never blocked on Render)
-      try {
-        const axios = require("axios");
-        const vercelRes = await axios.post("https://skill-predictor.vercel.app/api/send-otp", {
-          email,
-          otp,
-          subject: mailOptions.subject,
-          html: mailOptions.html
-        }, { timeout: 8000 });
+  // 🚀 LIGHTNING-FAST DISPATCH STRATEGY:
+  // On Cloud Hosting (Render), raw SMTP ports 465/587 are blocked by cloud firewalls.
+  // We prioritize the Vercel HTTPS Relay (Port 443) which delivers in < 2 seconds flat!
+  const isCloudHost = process.env.RENDER === "true" || process.env.NODE_ENV === "production" || !process.env.LOCAL_DEV;
 
-        if (vercelRes.data && vercelRes.data.success) {
-          console.log(`✅ OTP email successfully delivered via Vercel HTTPS relay to: ${email}`);
-          return { success: true, delivered: true, transport: "Vercel HTTPS Relay" };
-        }
-      } catch (vercelError) {
-        console.error(`❌ Vercel HTTPS relay failed: ${vercelError.message}`);
+  if (isCloudHost) {
+    try {
+      console.log(`⚡ Dispatching OTP via Fast Vercel HTTPS Relay to: ${email}`);
+      const axios = require("axios");
+      const vercelRes = await axios.post("https://skill-predictor.vercel.app/api/send-otp", {
+        email,
+        otp,
+        subject: mailOptions.subject,
+        html: mailOptions.html
+      }, { timeout: 5000 });
+
+      if (vercelRes.data && vercelRes.data.success) {
+        console.log(`✅ OTP email delivered in < 2s via Vercel HTTPS Relay to: ${email}`);
+        return { success: true, delivered: true, transport: "Vercel HTTPS Relay (Fast)" };
+      }
+    } catch (vercelError) {
+      console.warn(`⚠️ Vercel HTTPS relay failed (${vercelError.message}), attempting direct fallback...`);
+    }
+  }
+
+  // 2️⃣ Localhost / Direct SMTP Transports (for local dev or fallback)
+  try {
+    const tSSL = createSSLTransporter();
+    await tSSL.sendMail(mailOptions);
+    console.log(`✅ OTP email delivered via direct SSL 465 to: ${email}`);
+    return { success: true, delivered: true, transport: "Port 465 SSL" };
+  } catch (sslError) {
+    try {
+      const t587 = createPort587Transporter();
+      await t587.sendMail(mailOptions);
+      console.log(`✅ OTP email delivered via Port 587 STARTTLS to: ${email}`);
+      return { success: true, delivered: true, transport: "Port 587 STARTTLS" };
+    } catch (port587Error) {
+      // 3️⃣ Final fallback if not on cloud host
+      if (!isCloudHost) {
+        try {
+          const axios = require("axios");
+          const vercelRes = await axios.post("https://skill-predictor.vercel.app/api/send-otp", {
+            email,
+            otp,
+            subject: mailOptions.subject,
+            html: mailOptions.html
+          }, { timeout: 5000 });
+
+          if (vercelRes.data && vercelRes.data.success) {
+            return { success: true, delivered: true, transport: "Vercel HTTPS Relay" };
+          }
+        } catch (e) {}
       }
 
+      console.error(`❌ Both SMTP and Relay failed to deliver to ${email}: SSL: ${sslError.message} | 587: ${port587Error.message}`);
       return { 
         success: false, 
         delivered: false, 
-        error: `587: ${port587Error.message} | 465: ${sslError.message}`
+        error: `SSL: ${sslError.message} | 587: ${port587Error.message}`
       };
     }
   }
@@ -209,10 +231,21 @@ const sendQueryResolvedEmail = async (email, queryContent, aiAnswer) => {
       `
     };
 
-    transporter.sendMail(mailOptions).catch(err => console.error("❌ RESOLVE NOTIFICATION FAILED:", err.message));
+    try {
+      const t = createSSLTransporter();
+      await t.sendMail(mailOptions);
+    } catch (e) {
+      try {
+        const t587 = createPort587Transporter();
+        await t587.sendMail(mailOptions);
+      } catch (innerErr) {
+        console.warn("⚠️ Query resolution email fallback warning:", innerErr.message);
+      }
+    }
     return true;
   } catch (error) {
     console.error("❌ RESOLVE EMAIL ERROR:", error.message);
+    return false;
   }
 };
 

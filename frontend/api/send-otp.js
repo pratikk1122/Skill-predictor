@@ -19,8 +19,8 @@ export default async function handler(req, res) {
 
   const { email, otp, subject, html } = req.body || {};
 
-  if (!email || !otp) {
-    return res.status(400).json({ success: false, error: "Missing email or otp" });
+  if (!email || (!otp && !html)) {
+    return res.status(400).json({ success: false, error: "Missing email or content" });
   }
 
   try {
