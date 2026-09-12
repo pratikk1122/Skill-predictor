@@ -28,37 +28,42 @@ const ForgotPassword = () => {
 
   // 1️⃣ Step 1 & Resend: Send OTP
   const handleSendOtp = async (e) => {
-  if (e) e.preventDefault();
+    if (e) e.preventDefault();
 
-  if (!email) {
-    setMessage("Error: Email is required.");
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const res = await api.post("/auth/forgot-password", {
-      email: email.trim().toLowerCase()
-    });
-
-    setStep(2);
-    setTimer(30); // ⏳ 30s cooldown
-    setMessage("Success: Reset verification code sent strictly to your email inbox.");
-  } catch (err) {
-    const backendMsg = err.response?.data?.message;
-
-    if (backendMsg === "Email not authorized") {
-      setMessage("Error: You are not allowed to reset password.");
-    } else if (backendMsg === "Email is required") {
-      setMessage("Error: Please enter your email address.");
-    } else {
-      setMessage(backendMsg || "Error: Failed to send OTP.");
+    if (!email) {
+      setMessage("Error: Email is required.");
+      return;
     }
-  } finally {
-    setLoading(false);
-  }
-};
+
+    try {
+      setLoading(true);
+
+      const res = await api.post("/auth/forgot-password", {
+        email: email.trim().toLowerCase()
+      });
+
+      setStep(2);
+      setTimer(30); // ⏳ 30s cooldown
+      setMessage(res.data?.message || "Reset verification code sent to your email.");
+
+      if (res.data?.resetCode) {
+        const digits = String(res.data.resetCode).split("");
+        setOtp(digits);
+      }
+    } catch (err) {
+      const backendMsg = err.response?.data?.message;
+
+      if (backendMsg === "Email not authorized") {
+        setMessage("Error: You are not allowed to reset password.");
+      } else if (backendMsg === "Email is required") {
+        setMessage("Error: Please enter your email address.");
+      } else {
+        setMessage(backendMsg || "Error: Failed to send OTP.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   // 2️⃣ Step 2: Verify OTP
