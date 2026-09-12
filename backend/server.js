@@ -54,48 +54,51 @@ app.get("/api/debug-smtp", async (req, res) => {
     dns.lookup(hostname, { family: 4 }, callback);
   };
 
-  const t587 = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false, // STARTTLS
-    requireTLS: true,
-    family: 4,
-    lookup: ipv4Lookup,
-    auth: { user, pass },
-    tls: { servername: "smtp.gmail.com", rejectUnauthorized: false },
-    connectionTimeout: 8000
-  });
+  let ips = [];
+  try {
+    ips = await dns.promises.resolve4("smtp.gmail.com");
+  } catch (err) {
+    ips = [err.message];
+  }
 
-  const t465 = nodemailer.createTransport({
-    host: "smtp.gmail.com",
+  // Test 1: Direct IPv4 on Port 465 (SSL)
+  const targetIp = ips[0] && !ips[0].includes(" ") ? ips[0] : "142.250.192.108";
+  const tDirect465 = nodemailer.createTransport({
+    host: targetIp,
     port: 465,
     secure: true,
-    family: 4,
-    lookup: ipv4Lookup,
     auth: { user, pass },
     tls: { servername: "smtp.gmail.com", rejectUnauthorized: false },
-    connectionTimeout: 8000
+    connectionTimeout: 5000
   });
 
-  let r587 = null, r465 = null;
+  // Test 2: Standard service: "gmail"
+  const tService = nodemailer.createTransport({
+    service: "gmail",
+    auth: { user, pass },
+    connectionTimeout: 5000
+  });
+
+  let rDirect465 = null, rService = null;
   try {
-    await t587.verify();
-    r587 = "VERIFIED_OK";
+    await tDirect465.verify();
+    rDirect465 = "VERIFIED_OK";
   } catch (e) {
-    r587 = { error: e.message, code: e.code };
+    rDirect465 = { error: e.message, code: e.code };
   }
 
   try {
-    await t465.verify();
-    r465 = "VERIFIED_OK";
+    await tService.verify();
+    rService = "VERIFIED_OK";
   } catch (e) {
-    r465 = { error: e.message, code: e.code };
+    rService = { error: e.message, code: e.code };
   }
 
   return res.json({
-    success: r587 === "VERIFIED_OK" || r465 === "VERIFIED_OK",
-    port587_STARTTLS: r587,
-    port465_SSL: r465,
+    success: rDirect465 === "VERIFIED_OK" || rService === "VERIFIED_OK",
+    resolvedIpv4s: ips,
+    directIpv4_465: rDirect465,
+    service_gmail: rService,
     info
   });
 });
